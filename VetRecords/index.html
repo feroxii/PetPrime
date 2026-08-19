@@ -1994,30 +1994,46 @@ async function withBusy(btnId, label, fn){
     if (st && st.classList.contains('active')) renderSettings();
   }
 }
+/* ดึงไฟล์ล่าสุดมารวมกับข้อมูลในเครื่อง — คืน null ถ้าโฟลเดอร์ยังไม่มีไฟล์
+   quiet = ไม่ต้องถามอะไร ใช้ตอนถูกเรียกจากปุ่มสำรอง */
+async function pullLatest(quiet){
+  const files = await driveBackupFiles();
+  if (!files.length) return null;
+  let f = files[0], data = await driveGet(f.id);
+  /* ไฟล์ล่าสุดไม่มีข้อมูลเลย — ของตกค้างจากรุ่นเก่าที่ยังไม่มีตัวกันการสำรองไฟล์เปล่า
+     เสนอไฟล์ก่อนหน้าให้ แทนที่จะปล่อยให้กู้ข้อมูลไม่ได้
+     ตอนกดสำรองไม่ต้องถาม เพราะเดี๋ยวจะเขียนไฟล์เต็มทับให้อยู่แล้ว */
+  if (!quiet && Array.isArray(data) && !data.length && files.length > 1){
+    const prev = files[1];
+    if (confirm('ไฟล์ล่าสุด “' + f.name + '” ไม่มีข้อมูลอยู่เลย\n\n' +
+                'มักเกิดจากเครื่องที่ยังไม่มีข้อมูลเผลอกดสำรองขึ้น Drive\n\n' +
+                'ต้องการดึงไฟล์ก่อนหน้า “' + prev.name + '” แทนไหม?')){
+      f = prev; data = await driveGet(f.id);
+    }
+  }
+  return { name: f.name, n: mergeIncoming(data) };
+}
+
 function doDriveUp(){
   withBusy('btn-drive-up', 'กำลังสำรอง…', async () => {
-    const f = await driveUpload();
+    /* ---- ดึงของล่าสุดมารวมก่อนเสมอ ----
+       ไฟล์สำรองแต่ละไฟล์คือภาพรวมทั้งหมด ณ เวลานั้น ถ้าเครื่องที่ข้อมูลไม่ครบเขียนทับ
+       ตำแหน่ง "ไฟล์ล่าสุด" เครื่องที่มาดึงทีหลังจะได้ภาพที่ขาดของเครื่องอื่นไป
+       (เช่น ไม่เห็นรอยลบที่เครื่องอื่นเพิ่งทำ) รวมก่อนเขียนจึงเป็นทางเดียวที่ไม่ต้อง
+       พึ่งว่าเจ้าหน้าที่จะจำลำดับกดปุ่มได้ถูกทุกครั้ง */
+    const pre = await pullLatest(true);
+    const f   = await driveUpload();
     markBackedUp();
-    toast('สำรองขึ้น Drive แล้ว — ' + f.name);
+    const changed = pre ? pre.n.added + pre.n.updated + pre.n.removed : 0;
+    toast((changed ? 'รวมของใหม่จากเครื่องอื่น ' + changed + ' แผ่นก่อน แล้ว' : '') +
+          'สำรองขึ้น Drive แล้ว — ' + f.name);
   });
 }
 function doDriveDown(){
   withBusy('btn-drive-down', 'กำลังดึงข้อมูล…', async () => {
-    const files = await driveBackupFiles();
-    if (!files.length) throw new Error('ยังไม่มีไฟล์สำรองในโฟลเดอร์นี้');
-    let f = files[0], data = await driveGet(f.id);
-    /* ไฟล์ล่าสุดไม่มีข้อมูลเลย — เกิดจากรุ่นเก่าที่ยังไม่มีตัวกันการสำรองไฟล์เปล่า
-       เสนอไฟล์ก่อนหน้าให้ แทนที่จะปล่อยให้กู้ข้อมูลไม่ได้ */
-    if (Array.isArray(data) && !data.length && files.length > 1){
-      const prev = files[1];
-      if (confirm('ไฟล์ล่าสุด “' + f.name + '” ไม่มีข้อมูลอยู่เลย\n\n' +
-                  'มักเกิดจากเครื่องที่ยังไม่มีข้อมูลเผลอกดสำรองขึ้น Drive\n\n' +
-                  'ต้องการดึงไฟล์ก่อนหน้า “' + prev.name + '” แทนไหม?')){
-        f = prev; data = await driveGet(f.id);
-      }
-    }
-    const n = mergeIncoming(data);
-    toast('ดึงจาก ' + f.name + ' แล้ว — ' + mergeMsg(n));
+    const r = await pullLatest(false);
+    if (!r) throw new Error('ยังไม่มีไฟล์สำรองในโฟลเดอร์นี้');
+    toast('ดึงจาก ' + r.name + ' แล้ว — ' + mergeMsg(r.n));
   });
 }
 
