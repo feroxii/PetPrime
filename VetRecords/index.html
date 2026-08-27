@@ -8,7 +8,6 @@
 <meta name="theme-color" content="#16386B">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>บันทึกการรักษาสัตว์ป่วย (Vet Records)</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{
   /* ชุดสีตามโลโก้โรงพยาบาล (น้ำเงินเข้ม + ฟ้า + ขาว) */
@@ -232,6 +231,19 @@ table.hist th{padding:6px 8px}
   border-radius:99px;padding:1px 9px;font-size:11.5px;font-weight:600}
 .empty{padding:24px;text-align:center;color:#5B7A94}
 
+/* ---------- แท็บย่อยแยกตามชนิดฟอร์ม ---------- */
+.subtabs{display:flex;gap:4px;flex-wrap:wrap;margin:0 0 14px;
+  border-bottom:1px solid var(--line-soft)}
+.subtabs button{background:transparent;border:0;border-bottom:3px solid transparent;
+  color:var(--navy-mid);padding:8px 16px;font:inherit;font-size:13.5px;font-weight:600;
+  border-radius:6px 6px 0 0;margin-bottom:-1px}
+.subtabs button:hover{background:var(--blue-pale)}
+.subtabs button.active{color:var(--navy);border-bottom-color:var(--blue);background:var(--blue-soft)}
+.subtabs .cnt{display:inline-block;margin-left:7px;min-width:20px;
+  background:#fff;color:var(--navy);border:1px solid var(--line-soft);
+  border-radius:99px;padding:0 7px;font-size:11.5px;font-weight:600}
+.subtabs button.active .cnt{background:#fff;border-color:var(--blue)}
+
 /* ---------- หน้าตั้งค่า ---------- */
 .set-card{border:1px solid var(--line-soft);border-radius:10px;padding:14px 16px;margin-bottom:14px;background:#fff}
 .set-card h3{margin:0 0 5px;font-size:14.5px;color:var(--navy)}
@@ -403,8 +415,8 @@ table.vals th:first-child,table.vals td:first-child{text-align:left;white-space:
 </nav>
 
 <div class="topbar off no-print" id="offline-bar" hidden>
-  <span>ตอนนี้ไม่ได้ต่ออินเทอร์เน็ต — กรอก บันทึก และพิมพ์ได้ตามปกติ
-        ส่วนปุ่มที่ใช้ Google Drive จะกลับมาใช้ได้เมื่อเน็ตกลับมา</span>
+  <span>ตอนนี้ไม่ได้ต่ออินเทอร์เน็ต — ใช้งานได้ตามปกติทุกอย่าง
+        กรอก บันทึก และพิมพ์ได้ตามปกติ ส่วนการสำรอง/ดึงข้อมูลจะกลับมาทำงานเมื่อเน็ตกลับมา</span>
 </div>
 
 <div class="topbar bad no-print" id="clock-bar" hidden>
@@ -616,12 +628,16 @@ table.vals th:first-child,table.vals td:first-child{text-align:left;white-space:
       <button class="btn" id="btn-search">ค้นหา</button>
       <button class="btn" id="btn-reset">ล้างเงื่อนไข</button>
       <span class="spacer"></span>
-      <button class="btn primary" id="btn-drive-up">⬆ สำรองขึ้น Drive</button>
+      <button class="btn primary" id="btn-drive-up">⬆ สำรองข้อมูล</button>
       <button class="btn primary" id="btn-drive-down">⬇ ดึงข้อมูลล่าสุด</button>
       <span style="width:1px;height:22px;background:var(--line-soft);margin:0 3px"></span>
       <button class="btn" id="btn-export">⬇ สำรองเป็นไฟล์</button>
       <button class="btn" id="btn-import">⬆ นำเข้าจากไฟล์</button>
       <input type="file" id="file-import" accept="application/json" style="display:none">
+    </div>
+    <div class="subtabs" id="hist-forms">
+      <button data-hform="form1" class="active">ฟอร์มที่ 1 — ICU <span class="cnt">0</span></button>
+      <button data-hform="form2">ฟอร์มที่ 2 — Treatment &amp; Monitoring <span class="cnt">0</span></button>
     </div>
     <div id="hist-wrap"></div>
   </div>
@@ -630,43 +646,24 @@ table.vals th:first-child,table.vals td:first-child{text-align:left;white-space:
 <!-- ================= SETTINGS ================= -->
 <section class="panel no-print" id="tab-settings">
   <div class="sheet">
-    <h2 class="title">ตั้งค่าการเชื่อมต่อ Google Drive</h2>
+    <h2 class="title">ตั้งค่าโฟลเดอร์แชร์ของโรงพยาบาล</h2>
 
     <div class="set-state bad" id="cfg-blocked" hidden></div>
 
     <div class="set-card">
-      <h3>1. บัญชี Google</h3>
+      <h3>1. โฟลเดอร์แชร์ที่ใช้ร่วมกัน</h3>
+      <div class="set-row"><label>โฟลเดอร์</label><span class="set-val" id="cfg-folder">— ยังไม่ได้เลือก —</span></div>
+      <div class="set-row"><label>ไฟล์ของเครื่องนี้</label><span class="set-val" id="cfg-device">—</span></div>
+      <div class="set-state" id="cfg-fstate">ยังไม่ได้เลือกโฟลเดอร์แชร์</div>
       <div class="set-row">
-        <label for="cfg-client">Client ID</label>
-        <input type="text" id="cfg-client" autocomplete="off" spellcheck="false"
-               placeholder="xxxxxxxxxx.apps.googleusercontent.com">
-      </div>
-      <div class="set-state" id="cfg-acct">ยังไม่ได้เชื่อมต่อ</div>
-      <div class="set-row">
-        <button class="btn primary" id="cfg-connect">เชื่อมต่อบัญชี Google</button>
-        <button class="btn" id="cfg-switch">เปลี่ยนบัญชี</button>
-        <button class="btn" id="cfg-signout">ออกจากบัญชี</button>
-      </div>
-    </div>
-
-    <div class="set-card">
-      <h3>2. โฟลเดอร์ปลายทางใน Drive</h3>
-      <p class="hint">คัดลอกลิงก์โฟลเดอร์จากแถบที่อยู่ของเบราว์เซอร์มาวางได้เลย ระบบจะดึงรหัสโฟลเดอร์ให้เอง</p>
-      <div class="set-row">
-        <label for="cfg-url">ลิงก์โฟลเดอร์</label>
-        <input type="text" id="cfg-url" autocomplete="off" spellcheck="false"
-               placeholder="https://drive.google.com/drive/folders/…">
-      </div>
-      <div class="set-row"><label>รหัสโฟลเดอร์</label><span class="set-val" id="cfg-fid">—</span></div>
-      <div class="set-state" id="cfg-fstate">ยังไม่ได้ทดสอบการเชื่อมต่อ</div>
-      <div class="set-row">
+        <button class="btn primary" id="cfg-pick">เลือกโฟลเดอร์แชร์</button>
         <button class="btn" id="cfg-test">ทดสอบการเชื่อมต่อ</button>
-        <button class="btn" id="cfg-mkfolder">ใช้โฟลเดอร์ของแอป</button>
+        <button class="btn" id="cfg-forget">เลิกใช้โฟลเดอร์นี้</button>
       </div>
     </div>
 
     <div class="set-card">
-      <h3>3. การสำรองข้อมูล</h3>
+      <h3>2. การสำรองข้อมูล</h3>
       <div class="set-row"><label>สำรองล่าสุด</label><span class="set-val" id="cfg-last">—</span></div>
       <div class="set-row"><label>แผ่นที่เก็บอยู่</label><span class="set-val" id="cfg-count">—</span></div>
       <div class="set-row">
@@ -1306,7 +1303,7 @@ function deleteRecord(id){
   const rec = load().find(r => r.id === id);
   if (!rec) return;
   if (!confirm(`ลบข้อมูลของ "${rec.meta.name}" วันที่ ${rec.meta.date} ?\n\n` +
-               'เมื่อกดสำรองขึ้น Drive ครั้งถัดไป เครื่องอื่นที่ดึงข้อมูลจะลบตามด้วย')) return;
+               'เมื่อกดสำรองข้อมูลครั้งถัดไป เครื่องอื่นที่ดึงข้อมูลจะลบตามด้วย')) return;
   /* เก็บเป็น "รอยลบ" ไว้แทนการเอาออกทั้งแถว มิฉะนั้นการลบจะไม่เดินทางไปเครื่องอื่น
      และแผ่นที่ลบไปจะถูกดึงกลับมาทุกครั้งที่ sync — เนื้อข้อมูลถูกทิ้ง เหลือไว้แค่ที่ใช้จับคู่ */
   save(loadAll().map(r => r.id === id
@@ -1315,7 +1312,7 @@ function deleteRecord(id){
     : r));
   if (currentId[rec.form] === id) currentId[rec.form] = null;
   renderHistory();
-  toast('ลบข้อมูลแล้ว — กด “⬆ สำรองขึ้น Drive” เพื่อให้เครื่องอื่นลบตาม');
+  toast('ลบข้อมูลแล้ว — กด “⬆ สำรองข้อมูล” เพื่อให้เครื่องอื่นลบตาม');
 }
 
 /* ============ ประวัติ ============ */
@@ -1325,6 +1322,7 @@ function fmtTime(iso){
 }
 
 let onlyNoHN = false;
+let histForm = 'form1';        /* แท็บย่อยในหน้าประวัติที่เปิดอยู่ */
 function bindNoHN(){
   const b = document.getElementById('btn-nohn');
   if (b) b.onclick = () => { onlyNoHN = !onlyNoHN; renderHistory(); };
@@ -1334,7 +1332,7 @@ function bindNoHN(){
    ค่าตั้งของเครื่องนี้ (เก็บแยกจากข้อมูลคนไข้ ไม่ถูกส่งออกไปกับไฟล์สำรอง)
    ======================================================================= */
 const SETTINGS = 'vetrec.settings';
-const DEF_CFG  = { clientId:'', folderUrl:'', folderId:'', remindDays:3 };
+const DEF_CFG  = { remindDays:3 };
 function loadSettings(){
   let o = {};
   try { o = JSON.parse(localStorage.getItem(SETTINGS)) || {}; } catch(e){ o = {}; }
@@ -1344,15 +1342,6 @@ function loadSettings(){
 }
 function saveSettings(){ try { localStorage.setItem(SETTINGS, JSON.stringify(CFG)); } catch(e){} }
 const CFG = loadSettings();
-
-/* ดึงรหัสโฟลเดอร์ออกจากลิงก์ที่วางมา (หรือจะวางเฉพาะรหัสก็ได้) */
-function parseFolderId(u){
-  u = String(u == null ? '' : u).trim();
-  if (!u) return '';
-  const m = u.match(/\/folders\/([A-Za-z0-9_-]{10,})/) || u.match(/[?&]id=([A-Za-z0-9_-]{10,})/);
-  if (m) return m[1];
-  return /^[A-Za-z0-9_-]{10,}$/.test(u) ? u : '';
-}
 
 /* ---- เตือนให้สำรองข้อมูลเมื่อเว้นไปเกินจำนวนวันที่ตั้งไว้ ---- */
 const BACKUP_AT = 'vetrec.backupAt';
@@ -1376,20 +1365,31 @@ function checkBackupDue(){
 function renderHistory(){
   const q  = (document.getElementById('q-name').value || '').trim().toLowerCase();
   const qd = document.getElementById('q-date').value;
-  let list = load().sort((a,b) => (b.meta.date||'').localeCompare(a.meta.date||'') || b.saved.localeCompare(a.saved));
 
-  if (q)  list = list.filter(r => [r.meta.name, r.meta.hn, r.meta.owner]
+  /* base = กรองด้วยคำค้นและวันที่แล้ว แต่ยังไม่แยกตามฟอร์ม
+     ใช้ทั้งนับเลขบนแท็บย่อยและเป็นตัวตั้งของตาราง */
+  let base = load().sort((a,b) => (b.meta.date||'').localeCompare(a.meta.date||'') || b.saved.localeCompare(a.saved));
+  if (q)  base = base.filter(r => [r.meta.name, r.meta.hn, r.meta.owner]
                     .join(' ').toLowerCase().includes(q));
-  if (qd) list = list.filter(r => r.meta.date === qd);
+  if (qd) base = base.filter(r => r.meta.date === qd);
+  if (onlyNoHN) base = base.filter(r => !String(r.meta.hn || '').trim());
 
-  const all    = load();
-  const noHN   = all.filter(r => !String(r.meta.hn || '').trim());
+  /* เลขบนแท็บย่อยนับจาก base ทำให้พิมพ์ค้นหาแล้วเห็นทันทีว่ามีของอยู่ในฟอร์มไหนบ้าง */
+  document.querySelectorAll('#hist-forms button').forEach(b => {
+    const f = b.dataset.hform;
+    b.classList.toggle('active', f === histForm);
+    const c = b.querySelector('.cnt');
+    if (c) c.textContent = base.filter(r => r.form === f).length;
+  });
+
+  let list = base.filter(r => r.form === histForm);
+
+  const noHN   = base.filter(r => !String(r.meta.hn || '').trim());
   const notice = noHN.length
     ? '<div class="nohn"><span>มี <b>' + noHN.length + '</b> แผ่นที่ยังไม่มี HN (ข้อมูลที่บันทึกไว้ก่อนเริ่มบังคับกรอก) — ' +
       'เปิดดูแล้วเติม HN แล้วกดบันทึก จะเข้าระบบใหม่โดยไม่เกิดแผ่นซ้ำ</span>' +
       '<button class="btn mini" id="btn-nohn">' + (onlyNoHN ? 'แสดงทั้งหมด' : 'ดูเฉพาะแผ่นที่ยังไม่มี HN') + '</button></div>'
     : '';
-  if (onlyNoHN) list = list.filter(r => !String(r.meta.hn || '').trim());
 
   const wrap = document.getElementById('hist-wrap');
   if (!list.length){
@@ -1399,12 +1399,11 @@ function renderHistory(){
   }
   wrap.innerHTML = notice + `<table class="hist">
     <thead><tr>
-      <th style="width:90px">ฟอร์ม</th><th>ชื่อสัตว์ป่วย</th><th style="width:110px">HN</th>
+      <th>ชื่อสัตว์ป่วย</th><th style="width:110px">HN</th>
       <th>เจ้าของ</th><th style="width:110px">วันที่</th><th style="width:150px">บันทึกเมื่อ</th>
       <th style="width:150px"></th>
     </tr></thead><tbody>
     ${list.map(r => `<tr>
-      <td><span class="badge">${r.form === 'form1' ? 'ICU' : 'Treatment'}</span></td>
       <td>${esc(r.meta.name)}</td>
       <td>${esc(r.meta.hn)}</td>
       <td>${esc(r.meta.owner)}</td>
@@ -1718,6 +1717,7 @@ document.addEventListener('click', e => {
   if (!b) return;
 
   if (b.dataset.tab)   showTab(b.dataset.tab);
+  if (b.dataset.hform !== undefined){ histForm = b.dataset.hform; renderHistory(); }
   if (b.dataset.save)  saveRecord(b.dataset.save);
   if (b.dataset.nextday) startNextDay(b.dataset.nextday);
   if (b.dataset.clear){
@@ -1763,210 +1763,212 @@ document.addEventListener('click', e => {
 });
 
 /* =======================================================================
-   Google Drive — สำรอง/ดึงข้อมูลอัตโนมัติจากโฟลเดอร์ที่ตั้งไว้
-   ขอสิทธิ์แบบจำกัด (drive.file) คือแอปเห็นเฉพาะไฟล์ที่ตัวเองสร้างเท่านั้น
+   ที่เก็บข้อมูลกลาง: โฟลเดอร์ที่ OneDrive ซิงก์ให้ระหว่างเครื่อง
+   ใช้ File System Access API เขียน/อ่านไฟล์ตรง ๆ ไม่ผ่านคลาวด์ ไม่มีบัญชีให้ล็อกอิน
+   ข้อมูลคนไข้จึงไม่ออกนอกโรงพยาบาล และการซิงก์ไม่ต้องใช้อินเทอร์เน็ต
    ======================================================================= */
-const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
-const API    = 'https://www.googleapis.com/drive/v3';
-const API_UP = 'https://www.googleapis.com/upload/drive/v3';
-let gClient = null, gClientFor = '', gToken = null, gTokenExp = 0, gAcct = '';
-let gWaiters = [];                 /* ผู้รอ token ทั้งหมด — ต้องเป็นคิว ไม่ใช่ช่องเดียว
-                                      มิฉะนั้นคำขอที่ซ้อนเข้ามาจะทำให้คำขอก่อนหน้าค้างไม่จบ */
-function settleToken(err, tok){
-  const waiting = gWaiters;
-  gWaiters = [];
-  waiting.forEach(f => f(err, tok));
-}
 
-/* บอกเหตุผลที่ยังใช้ Drive ไม่ได้ (คืนค่าว่าง = ใช้ได้) */
+/* ---- ที่เก็บ handle ของโฟลเดอร์ ----
+   FileSystemDirectoryHandle เก็บใน localStorage ไม่ได้ (เก็บได้แต่สตริง) ต้องใช้ IndexedDB */
+const FSDB = 'vetrec.fs', FSKEY = 'folder';
+function idb(){
+  return new Promise((res, rej) => {
+    const q = indexedDB.open(FSDB, 1);
+    q.onupgradeneeded = () => q.result.createObjectStore('h');
+    q.onsuccess = () => res(q.result);
+    q.onerror   = () => rej(q.error || new Error('เปิดที่เก็บภายในไม่ได้'));
+  });
+}
+function idbDo(mode, fn){
+  return idb().then(db => new Promise((res, rej) => {
+    const tx = db.transaction('h', mode);
+    const rq = fn(tx.objectStore('h'));
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror   = () => rej(rq.error);
+  }));
+}
+const idbGet = k       => idbDo('readonly',  st => st.get(k));
+const idbSet = (k, v)  => idbDo('readwrite', st => st.put(v, k));
+const idbDel = k       => idbDo('readwrite', st => st.delete(k));
+
+let dirHandle = null;
+const fsSupported = () => typeof window !== 'undefined' && 'showDirectoryPicker' in window;
+
+/* บอกเหตุผลที่ยังใช้โฟลเดอร์แชร์ไม่ได้ (คืนค่าว่าง = ใช้ได้) */
 function driveBlockedReason(){
   if (location.protocol === 'file:')
-    return 'ตอนนี้เปิดไฟล์จากเครื่องโดยตรง (file://) — Google ไม่อนุญาตให้เข้าสู่ระบบจากที่อยู่แบบนี้ ' +
-           'ปุ่มที่ใช้ Drive จึงยังกดไม่ได้ ต้องเปิดแอปผ่านเว็บ (เช่น GitHub Pages) ก่อน ' +
-           'ระหว่างนี้ยังใช้ “สำรองเป็นไฟล์ / นำเข้าจากไฟล์” ได้ตามปกติ';
-  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1')
-    return 'ที่อยู่ของหน้านี้ไม่ใช่ https — Google ต้องการ https สำหรับการเข้าสู่ระบบ';
+    return 'ตอนนี้เปิดไฟล์จากเครื่องโดยตรง (file://) — เบราว์เซอร์ไม่ยอมให้เขียนโฟลเดอร์จากที่อยู่แบบนี้ ' +
+           'ต้องเปิดแอปผ่านเว็บก่อน ระหว่างนี้ยังใช้ “สำรองเป็นไฟล์ / นำเข้าจากไฟล์” ได้ตามปกติ';
+  if (location.protocol !== 'https:' && !window.isSecureContext)
+    return 'ที่อยู่ของหน้านี้ไม่ปลอดภัย (ต้องเป็น https) เบราว์เซอร์จึงไม่ยอมให้เข้าถึงโฟลเดอร์';
+  if (!fsSupported())
+    return 'เบราว์เซอร์นี้เปิดโฟลเดอร์แชร์ไม่ได้ — ต้องใช้ Microsoft Edge หรือ Google Chrome ' +
+           '(Firefox กับ Safari ยังไม่รองรับ) ระหว่างนี้ยังใช้ “สำรองเป็นไฟล์ / นำเข้าจากไฟล์” ได้';
   return '';
 }
-function gisReady(){
-  return typeof google !== 'undefined' && google.accounts && google.accounts.oauth2;
-}
-function ensureClient(){
-  if (!CFG.clientId) throw new Error('ยังไม่ได้ใส่ Client ID — ไปที่แท็บ “ตั้งค่า” ก่อน');
-  if (!gisReady()) throw new Error('ยังโหลดไลบรารีของ Google ไม่สำเร็จ (ต้องต่ออินเทอร์เน็ต แล้วโหลดหน้านี้ใหม่)');
-  if (gClient && gClientFor === CFG.clientId) return gClient;
-  gClientFor = CFG.clientId;
-  gClient = google.accounts.oauth2.initTokenClient({
-    client_id: CFG.clientId,
-    scope: DRIVE_SCOPE,
-    callback: r => {
-      if (r && r.access_token){
-        gToken = r.access_token;
-        gTokenExp = Date.now() + (Number(r.expires_in || 3600) - 60) * 1000;
-        settleToken(null, r.access_token);
-      } else settleToken(new Error('ไม่ได้รับสิทธิ์เข้าถึง Google Drive'));
-    },
-    error_callback: e => {
-      const t = e && e.type;
-      settleToken(new Error(
-        t === 'popup_closed'          ? 'ปิดหน้าต่างเข้าสู่ระบบก่อนกดอนุญาต'
-      : t === 'popup_failed_to_open'  ? 'เบราว์เซอร์บล็อกหน้าต่างเข้าสู่ระบบ — อนุญาต pop-up ของเว็บนี้ก่อน'
-      :                                 'เข้าสู่ระบบไม่สำเร็จ'));
-    }
-  });
-  return gClient;
-}
-/* mode: '' = เงียบถ้าเคยอนุญาตไว้แล้ว, 'select_account' = ให้เลือกบัญชีใหม่ */
-function getToken(mode){
-  const why = driveBlockedReason();
-  if (why) return Promise.reject(new Error(why));
-  if (!mode && gToken && Date.now() < gTokenExp) return Promise.resolve(gToken);
-  return new Promise((res, rej) => {
-    let c;
-    try { c = ensureClient(); } catch(err){ return rej(err); }
-    const firstInLine = gWaiters.length === 0;
-    gWaiters.push((err, tok) => err ? rej(err) : res(tok));
-    /* ถ้ามีคำขออยู่ก่อนแล้วให้รอผลร่วมกัน ไม่ยิงซ้ำ จะได้ไม่เปิดหน้าต่างขออนุญาตซ้อนกัน */
-    if (firstInLine) c.requestAccessToken({ prompt: mode || '' });
-  });
-}
-async function dfetch(url, opts){
-  const tok = await getToken('');
-  const o = Object.assign({}, opts || {});
-  o.headers = Object.assign({}, o.headers, { Authorization: 'Bearer ' + tok });
-  let r;
-  try { r = await fetch(url, o); }
-  catch(e){ throw new Error('ติดต่อ Google Drive ไม่ได้ — ตรวจสอบอินเทอร์เน็ต'); }
-  checkClock(r);
-  if (r.status === 401 || r.status === 403){
-    let m = ''; try { m = (await r.json()).error.message; } catch(e){}
-    if (r.status === 401){ gToken = null; gTokenExp = 0; }
-    throw new Error(r.status === 401 ? 'สิทธิ์หมดอายุ — กดเชื่อมต่อบัญชี Google อีกครั้ง'
-                                     : 'ไม่มีสิทธิ์เข้าถึง' + (m ? ' (' + m + ')' : ''));
-  }
-  if (!r.ok){
-    let m = ''; try { m = (await r.json()).error.message; } catch(e){}
-    throw new Error('Google Drive แจ้งข้อผิดพลาด: ' + (m || r.status));
-  }
-  return r;
-}
-/* ---------------------------------------------------------------
-   นาฬิกาเครื่องเพี้ยน = อันตรายเงียบ
-   กติกา "ใครบันทึกทีหลังชนะ" ใช้นาฬิกาของเครื่องที่กรอก ถ้าเครื่องไหนตั้งเวลาช้า
-   งานทั้งเวรของเครื่องนั้นจะถูกทับหายโดยไม่มีใครรู้ตัว
-   ทุกคำตอบจาก Google มีเวลาจริงของเซิร์ฟเวอร์ติดมาในหัวข้อ Date อยู่แล้ว เอามาเทียบได้ฟรี
-   --------------------------------------------------------------- */
-const CLOCK_TOLERANCE_MIN = 5;
-let clockDismissed = false;
-function checkClock(res){
-  if (clockDismissed) return;
-  let head = null;
-  try { head = res && res.headers && res.headers.get ? res.headers.get('date') : null; } catch(e){}
-  if (!head) return;
-  const server = Date.parse(head);
-  if (isNaN(server)) return;
-  const driftMin = (Date.now() - server) / 60000;
-  const bar = document.getElementById('clock-bar');
-  if (!bar) return;
-  if (Math.abs(driftMin) < CLOCK_TOLERANCE_MIN){ bar.hidden = true; return; }
-  const amount = Math.abs(driftMin) >= 120
-    ? Math.round(Math.abs(driftMin) / 60) + ' ชั่วโมง'
-    : Math.round(Math.abs(driftMin)) + ' นาที';
-  document.getElementById('clock-msg').textContent =
-    'นาฬิกาของเครื่องนี้' + (driftMin > 0 ? 'เร็วกว่า' : 'ช้ากว่า') + 'เวลาจริงประมาณ ' + amount +
-    ' — ระบบใช้เวลาของเครื่องตัดสินว่าข้อมูลฉบับไหนใหม่กว่า ' +
-    (driftMin > 0 ? 'ข้อมูลของเครื่องนี้จะไปทับของเครื่องอื่นเสมอ'
-                  : 'ข้อมูลที่กรอกในเครื่องนี้อาจถูกเครื่องอื่นทับหาย') +
-    ' กรุณาตั้งวันและเวลาของ Windows ให้ตรง (ตั้งเวลาอัตโนมัติ)';
-  bar.hidden = false;
+
+async function loadFolderHandle(){
+  if (dirHandle) return dirHandle;
+  try { dirHandle = (await idbGet(FSKEY)) || null; } catch(e){ dirHandle = null; }
+  return dirHandle;
 }
 
-function needFolder(){
-  if (!CFG.folderId) throw new Error('ยังไม่ได้ตั้งโฟลเดอร์ปลายทาง — ไปที่แท็บ “ตั้งค่า” ก่อน');
+/* เลือกโฟลเดอร์แชร์ (ต้องกดจากปุ่มเท่านั้น เบราว์เซอร์บังคับ) */
+async function pickFolder(){
+  const why = driveBlockedReason();
+  if (why) throw new Error(why);
+  let h;
+  try {
+    h = await window.showDirectoryPicker({ id:'vetrec-share', mode:'readwrite' });
+  } catch(e){
+    if (e && e.name === 'AbortError') throw new Error('ยกเลิกการเลือกโฟลเดอร์');
+    throw new Error('เปิดหน้าต่างเลือกโฟลเดอร์ไม่สำเร็จ — ' + ((e && e.message) || e));
+  }
+  if (await h.requestPermission({ mode:'readwrite' }) !== 'granted')
+    throw new Error('ไม่ได้รับสิทธิ์อ่าน/เขียนโฟลเดอร์นี้');
+  dirHandle = h;
+  try { await idbSet(FSKEY, h); } catch(e){}
+  return h;
 }
-function stampName(){
-  const d = new Date(), p = n => String(n).padStart(2,'0');
-  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) +
-         '-' + p(d.getHours()) + p(d.getMinutes());
+
+async function forgetFolder(){
+  dirHandle = null;
+  try { await idbDel(FSKEY); } catch(e){}
 }
-async function driveFolderInfo(id){
-  const r = await dfetch(API + '/files/' + encodeURIComponent(id) +
-    '?supportsAllDrives=true&fields=' + encodeURIComponent('id,name,mimeType,webViewLink'));
-  return r.json();
+
+/* ---- ต้องเรียกเป็นสิ่งแรกในตัวจัดการปุ่ม ----
+   requestPermission ต้องการ user activation ซึ่งหมดอายุถ้ารอ await อย่างอื่นไปก่อนหลายชั้น
+   จึงห้ามเรียกกลางทาง ต้องเรียกทันทีที่ผู้ใช้กดปุ่ม */
+async function ensureFolder(interactive){
+  const why = driveBlockedReason();
+  if (why) throw new Error(why);
+  const h = await loadFolderHandle();
+  if (!h) throw new Error('ยังไม่ได้เลือกโฟลเดอร์แชร์ — ไปที่แท็บ “ตั้งค่า” แล้วกด “เลือกโฟลเดอร์แชร์” ก่อน');
+  const opt = { mode:'readwrite' };
+  let p;
+  try { p = await h.queryPermission(opt); } catch(e){ p = 'prompt'; }
+  if (p === 'granted') return h;
+  if (!interactive)
+    throw new Error('ต้องอนุญาตให้เข้าถึงโฟลเดอร์ก่อน — กดปุ่มอีกครั้งแล้วกด “แก้ไขไฟล์”');
+  try { p = await h.requestPermission(opt); } catch(e){ p = 'denied'; }
+  if (p !== 'granted') throw new Error('ไม่ได้รับสิทธิ์เข้าถึงโฟลเดอร์แชร์');
+  return h;
 }
-const APP_FOLDER = 'Vet Records (บันทึกการรักษา)';
-/* หาโฟลเดอร์ที่ "แอปนี้เคยสร้าง" ชื่อตรงกัน — สิทธิ์ drive.file ทำให้เห็นเฉพาะของแอปเองอยู่แล้ว
-   เรียงตามเวลาสร้าง เพื่อให้ทุกเครื่องเลือกอันเดียวกันเสมอถ้าเผลอสร้างซ้ำไว้ก่อนหน้านี้ */
-async function driveFindFolders(name){
-  const safeName = String(name).split('\\').join('\\\\').split("'").join("\\'");
-  const q = "mimeType = 'application/vnd.google-apps.folder' and trashed = false and name = '" + safeName + "'";
-  const url = API + '/files?q=' + encodeURIComponent(q) +
-              '&orderBy=' + encodeURIComponent('createdTime') +
-              '&pageSize=20&fields=' + encodeURIComponent('files(id,name,webViewLink,createdTime)') +
-              '&supportsAllDrives=true&includeItemsFromAllDrives=true';
-  const r = await dfetch(url);
-  return (await r.json()).files || [];
+
+/* ---- รหัสประจำเครื่อง ----
+   แต่ละเครื่องเป็นเจ้าของไฟล์ของตัวเองไฟล์เดียว ชื่อ vet-records-<รหัส>.json
+   ไม่มีสองเครื่องเขียนไฟล์เดียวกัน การเขียนชนกันจึงเกิดไม่ได้เลยโดยโครงสร้าง
+   และจำนวนไฟล์คงที่เท่าจำนวนเครื่อง ไม่โตขึ้นเรื่อย ๆ จนพื้นที่เต็ม */
+/* ชื่อโฟลเดอร์ที่ตัวช่วยติดตั้งสร้างไว้ — File System Access ไม่ยอมให้แอปเห็นเส้นทางเต็ม
+   เห็นได้แค่ชื่อโฟลเดอร์ จึงใช้ชื่อนี้เป็นตัวยืนยันคร่าว ๆ ว่าเลือกถูกอันหรือเปล่า */
+const EXPECT_FOLDER = 'PetPrime-VetRecords';
+
+const DEVICE_KEY = 'vetrec.deviceId';
+function deviceId(){
+  let id = null;
+  try { id = localStorage.getItem(DEVICE_KEY); } catch(e){}
+  if (!id || !/^[a-z0-9]{4,12}$/.test(id)){
+    id = Math.random().toString(36).slice(2, 8);
+    try { localStorage.setItem(DEVICE_KEY, id); } catch(e){}
+  }
+  return id;
 }
-async function driveMakeFolder(name){
-  const r = await dfetch(API + '/files?fields=' + encodeURIComponent('id,name,webViewLink'), {
-    method:'POST',
-    headers:{ 'Content-Type':'application/json; charset=UTF-8' },
-    body: JSON.stringify({ name: name, mimeType:'application/vnd.google-apps.folder' })
-  });
-  return r.json();
+const myFileName = () => 'vet-records-' + deviceId() + '.json';
+
+const BACKUP_RE = /^vet-records-.*\.json$/i;
+
+function fsErr(e){
+  const n = e && e.name;
+  if (n === 'NotFoundError')     return new Error('เปิดโฟลเดอร์แชร์ไม่ได้ — โฟลเดอร์อาจถูกย้าย ลบ หรือ OneDrive ยังไม่พร้อม');
+  if (n === 'NotAllowedError')   return new Error('ไม่มีสิทธิ์เข้าถึงโฟลเดอร์แชร์ — กดปุ่มอีกครั้งแล้วกดอนุญาต');
+  if (n === 'NoModificationAllowedError' || n === 'InvalidStateError')
+    return new Error('เขียนลงโฟลเดอร์แชร์ไม่ได้ — อาจมีโปรแกรมอื่นเปิดไฟล์ค้างไว้ หรือโฟลเดอร์เป็นแบบอ่านอย่างเดียว');
+  return new Error('ติดต่อโฟลเดอร์แชร์ไม่ได้ — ' + ((e && e.message) || e));
+}
+
+/* จำเวลาแก้ไขไฟล์ที่อ่านไปแล้ว รอบต่อไปข้ามไฟล์ที่ไม่เปลี่ยน
+   ที่ข้อมูลสะสมเยอะ ๆ ไฟล์ละหลายสิบ MB การอ่านซ้ำทุกครั้งจะช้าโดยไม่จำเป็น */
+const seenFiles = new Map();
+
+/* รายชื่อไฟล์สำรองในโฟลเดอร์ เรียงใหม่ไปเก่า */
+async function driveBackupFiles(){
+  const dir = await ensureFolder(false);
+  const out = [];
+  try {
+    for await (const [name, h] of dir.entries()){
+      if (h.kind !== 'file' || !BACKUP_RE.test(name)) continue;
+      let f;
+      try { f = await h.getFile(); } catch(e){ continue; }   /* ไฟล์ถูกลบระหว่างไล่อ่าน ก็ข้ามไป */
+      out.push({ name, handle:h, modified:f.lastModified, size:f.size });
+    }
+  } catch(e){ throw fsErr(e); }
+  out.sort((a, b) => b.modified - a.modified || String(b.name).localeCompare(String(a.name)));
+  return out;
+}
+async function driveGet(f){
+  let text;
+  try { text = await (await f.handle.getFile()).text(); }
+  catch(e){ throw fsErr(e); }
+  try { return JSON.parse(text); }
+  catch(e){ throw new Error('อ่านไฟล์ “' + f.name + '” ไม่ได้ — เนื้อไฟล์เสีย หรือไม่ใช่ไฟล์สำรองของแอป'); }
 }
 async function driveUpload(){
-  needFolder();
-  /* กันเครื่องที่ยังไม่มีข้อมูลเผลอกดสำรอง แล้วไปทับ "ไฟล์ล่าสุด" ในโฟลเดอร์ด้วยไฟล์เปล่า
-     ซึ่งจะทำให้เครื่องที่มากู้ข้อมูลทีหลังดึงได้แต่ไฟล์ว่าง */
+  const dir = await ensureFolder(false);
   if (!loadAll().length)
     throw new Error('เครื่องนี้ยังไม่มีแผ่นบันทึก จึงไม่มีอะไรให้สำรอง — ' +
                     'ถ้าต้องการข้อมูลจากเครื่องอื่น ให้กด “⬇ ดึงข้อมูลล่าสุด” แทน');
-  const meta = { name:'vet-records-' + stampName() + '.json',
-                 mimeType:'application/json', parents:[CFG.folderId] };
-  const bd = 'vetrec' + Math.random().toString(36).slice(2);
-  const body = '--' + bd + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' +
-               JSON.stringify(meta) +
-               '\r\n--' + bd + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' +
-               JSON.stringify(loadAll(), null, 2) +
-               '\r\n--' + bd + '--';
-  const r = await dfetch(API_UP + '/files?uploadType=multipart&supportsAllDrives=true&fields=' +
-                         encodeURIComponent('id,name'), {
-    method:'POST', headers:{ 'Content-Type':'multipart/related; boundary=' + bd }, body: body
-  });
-  return r.json();
+  const name = myFileName();
+  try {
+    const fh = await dir.getFileHandle(name, { create:true });
+    const w  = await fh.createWritable();
+    await w.write(JSON.stringify(loadAll(), null, 2));
+    await w.close();
+  } catch(e){ throw fsErr(e); }
+  return { name };
 }
-/* รายชื่อไฟล์สำรองในโฟลเดอร์ เรียงใหม่ไปเก่า */
-async function driveBackupFiles(){
-  needFolder();
-  const q = "'" + CFG.folderId + "' in parents and trashed = false";
-  const url = API + '/files?q=' + encodeURIComponent(q) +
-              '&orderBy=' + encodeURIComponent('modifiedTime desc') +
-              '&pageSize=10&fields=' + encodeURIComponent('files(id,name,modifiedTime)') +
-              '&supportsAllDrives=true&includeItemsFromAllDrives=true';
-  const r = await dfetch(url);
-  return ((await r.json()).files || []).filter(f => /\.json$/i.test(f.name));
-}
-async function driveNewest(){
-  return (await driveBackupFiles())[0] || null;
-}
-async function driveGet(id){
-  const r = await dfetch(API + '/files/' + encodeURIComponent(id) + '?alt=media&supportsAllDrives=true');
-  /* ไฟล์ในโฟลเดอร์อาจเป็นไฟล์อื่นที่ลงท้าย .json หรือไฟล์ที่เสีย — บอกให้รู้เรื่องดีกว่าโยน SyntaxError ดิบ */
-  try { return await r.json(); }
-  catch(e){ throw new Error('อ่านไฟล์นี้ไม่ได้ — เนื้อไฟล์เสีย หรือไม่ใช่ไฟล์สำรองของแอป'); }
+async function folderInfo(){
+  const dir = await ensureFolder(false);
+  const files = await driveBackupFiles();
+  const mine = files.some(f => f.name === myFileName());
+  return { name: dir.name, count: files.length, mine: mine, newest: files[0] || null };
 }
 
-/* ---- ตัวกันงาน Drive ซ้อนกัน ----
+/* ---------------------------------------------------------------
+   นาฬิกาเครื่องเพี้ยน = อันตรายเงียบ
+   กติกา "ใครบันทึกทีหลังชนะ" ใช้นาฬิกาของเครื่องที่กรอก ถ้าเครื่องไหนตั้งเวลาไม่ตรง
+   งานทั้งเวรของเครื่องนั้นอาจถูกทับหายโดยไม่มีใครรู้ตัว
+   ไม่มีเซิร์ฟเวอร์ให้ถามเวลาจริงแล้ว จึงเทียบกันเองระหว่างเครื่อง:
+   ถ้าเจอแผ่นที่บันทึก "ล้ำอนาคต" เทียบกับนาฬิกาเครื่องนี้ แปลว่ามีเครื่องหนึ่งตั้งเวลาผิดแน่ ๆ
+   --------------------------------------------------------------- */
+const CLOCK_TOLERANCE_MIN = 10;
+let clockDismissed = false;
+function checkClockFrom(list){
+  const bar = document.getElementById('clock-bar');
+  if (!bar || clockDismissed || !Array.isArray(list)) return;
+  let ahead = 0;
+  list.forEach(r => {
+    const t = Date.parse(r && r.saved);
+    if (!isNaN(t)){ const d = (t - Date.now()) / 60000; if (d > ahead) ahead = d; }
+  });
+  if (ahead < CLOCK_TOLERANCE_MIN){ bar.hidden = true; return; }
+  const amount = ahead >= 120 ? Math.round(ahead / 60) + ' ชั่วโมง' : Math.round(ahead) + ' นาที';
+  document.getElementById('clock-msg').textContent =
+    'เจอแผ่นที่บันทึกล้ำเวลาของเครื่องนี้ไป ' + amount + ' — แปลว่ามีเครื่องใดเครื่องหนึ่งตั้งเวลาไม่ตรง ' +
+    'ระบบใช้เวลาบันทึกตัดสินว่าข้อมูลฉบับไหนใหม่กว่า ถ้าเวลาผิดข้อมูลจะถูกทับผิดตัว ' +
+    'กรุณาตรวจวันและเวลาของ Windows ให้ตรงกันทุกเครื่อง (ตั้งค่าวันที่และเวลา → ตั้งเวลาอัตโนมัติ)';
+  bar.hidden = false;
+}
+
+/* ---- ตัวกันงานโฟลเดอร์แชร์ซ้อนกัน ----
    ใช้ร่วมกันทั้งปุ่มในแท็บประวัติและในหน้าตั้งค่า ถ้าครอบไม่ครบ การกดซ้ำระหว่างรอเน็ต
    จะยิงคำสั่งซ้อนกัน เช่น "ใช้โฟลเดอร์ของแอป" กดสองครั้งแล้วได้โฟลเดอร์สองอัน */
 let driveBusy = false;
 function driveLock(){
-  if (driveBusy){ toast('กำลังทำงานกับ Google Drive อยู่ รอให้เสร็จก่อนครับ'); return false; }
+  if (driveBusy){ toast('กำลังทำงานกับโฟลเดอร์แชร์อยู่ รอให้เสร็จก่อนครับ'); return false; }
   driveBusy = true;
   return true;
 }
-const CFG_BTNS = ['cfg-connect','cfg-switch','cfg-signout','cfg-test','cfg-mkfolder'];
+const CFG_BTNS = ['cfg-pick','cfg-test','cfg-forget'];
 function cfgBtns(disabled){
   CFG_BTNS.forEach(id => { const b = document.getElementById(id); if (b) b.disabled = disabled; });
 }
@@ -1996,44 +1998,58 @@ async function withBusy(btnId, label, fn){
 }
 /* ดึงไฟล์ล่าสุดมารวมกับข้อมูลในเครื่อง — คืน null ถ้าโฟลเดอร์ยังไม่มีไฟล์
    quiet = ไม่ต้องถามอะไร ใช้ตอนถูกเรียกจากปุ่มสำรอง */
-async function pullLatest(quiet){
+/* อ่านไฟล์ของ "ทุกเครื่อง" แล้วรวมเข้าด้วยกัน
+   ไม่มีแนวคิด "ไฟล์ล่าสุด" อีกแล้ว ทุกไฟล์มีค่าเท่ากัน ใครใหม่กว่าตัดสินที่เวลาบันทึกของแต่ละแผ่น
+   ผลพลอยได้: ไฟล์เก่าค้างจากเครื่องที่เลิกใช้ไม่เป็นอันตราย เพราะแผ่นในนั้นเก่ากว่าเสมอ */
+async function pullAll(){
   const files = await driveBackupFiles();
   if (!files.length) return null;
-  let f = files[0], data = await driveGet(f.id);
-  /* ไฟล์ล่าสุดไม่มีข้อมูลเลย — ของตกค้างจากรุ่นเก่าที่ยังไม่มีตัวกันการสำรองไฟล์เปล่า
-     เสนอไฟล์ก่อนหน้าให้ แทนที่จะปล่อยให้กู้ข้อมูลไม่ได้
-     ตอนกดสำรองไม่ต้องถาม เพราะเดี๋ยวจะเขียนไฟล์เต็มทับให้อยู่แล้ว */
-  if (!quiet && Array.isArray(data) && !data.length && files.length > 1){
-    const prev = files[1];
-    if (confirm('ไฟล์ล่าสุด “' + f.name + '” ไม่มีข้อมูลอยู่เลย\n\n' +
-                'มักเกิดจากเครื่องที่ยังไม่มีข้อมูลเผลอกดสำรองขึ้น Drive\n\n' +
-                'ต้องการดึงไฟล์ก่อนหน้า “' + prev.name + '” แทนไหม?')){
-      f = prev; data = await driveGet(f.id);
-    }
+  const total = { added:0, updated:0, skipped:0, removed:0 };
+  const bad = [];
+  let readCount = 0, skipCount = 0;
+
+  for (const f of files){
+    if (seenFiles.get(f.name) === f.modified){ skipCount++; continue; }   /* ไม่เปลี่ยนตั้งแต่รอบก่อน */
+    let data;
+    try { data = await driveGet(f); }
+    catch(e){ bad.push(f.name); continue; }        /* ไฟล์เดียวเสียต้องไม่ทำให้ทั้งรอบล้ม */
+    if (!Array.isArray(data)){ bad.push(f.name); continue; }
+    checkClockFrom(data);
+    const n = mergeIncoming(data);
+    total.added += n.added; total.updated += n.updated;
+    total.skipped += n.skipped; total.removed += n.removed;
+    seenFiles.set(f.name, f.modified);
+    readCount++;
   }
-  return { name: f.name, n: mergeIncoming(data) };
+  return { n: total, files: files.length, read: readCount, skipped: skipCount, bad: bad };
 }
 
 function doDriveUp(){
   withBusy('btn-drive-up', 'กำลังสำรอง…', async () => {
+    await ensureFolder(true);          /* ต้องเป็นบรรทัดแรก — ขอสิทธิ์ต้องใช้ user activation */
     /* ---- ดึงของล่าสุดมารวมก่อนเสมอ ----
        ไฟล์สำรองแต่ละไฟล์คือภาพรวมทั้งหมด ณ เวลานั้น ถ้าเครื่องที่ข้อมูลไม่ครบเขียนทับ
        ตำแหน่ง "ไฟล์ล่าสุด" เครื่องที่มาดึงทีหลังจะได้ภาพที่ขาดของเครื่องอื่นไป
        (เช่น ไม่เห็นรอยลบที่เครื่องอื่นเพิ่งทำ) รวมก่อนเขียนจึงเป็นทางเดียวที่ไม่ต้อง
        พึ่งว่าเจ้าหน้าที่จะจำลำดับกดปุ่มได้ถูกทุกครั้ง */
-    const pre = await pullLatest(true);
+    const pre = await pullAll();
     const f   = await driveUpload();
+    seenFiles.delete(f.name);              /* ไฟล์ของเราเพิ่งเปลี่ยน รอบหน้าต้องอ่านใหม่ */
     markBackedUp();
     const changed = pre ? pre.n.added + pre.n.updated + pre.n.removed : 0;
     toast((changed ? 'รวมของใหม่จากเครื่องอื่น ' + changed + ' แผ่นก่อน แล้ว' : '') +
-          'สำรองขึ้น Drive แล้ว — ' + f.name);
+          'สำรองข้อมูลแล้ว — ' + f.name +
+          (pre && pre.bad.length ? ' (อ่านไฟล์ ' + pre.bad.join(', ') + ' ไม่ได้)' : ''));
   });
 }
 function doDriveDown(){
   withBusy('btn-drive-down', 'กำลังดึงข้อมูล…', async () => {
-    const r = await pullLatest(false);
+    await ensureFolder(true);          /* ต้องเป็นบรรทัดแรก — ขอสิทธิ์ต้องใช้ user activation */
+    const r = await pullAll();
     if (!r) throw new Error('ยังไม่มีไฟล์สำรองในโฟลเดอร์นี้');
-    toast('ดึงจาก ' + r.name + ' แล้ว — ' + mergeMsg(r.n));
+    const from = r.read ? 'ดึงจาก ' + r.read + ' เครื่อง' : 'ไม่มีเครื่องไหนอัปเดตใหม่';
+    toast(from + ' — ' + mergeMsg(r.n) +
+          (r.bad.length ? ' (อ่านไฟล์ ' + r.bad.join(', ') + ' ไม่ได้)' : ''));
   });
 }
 
@@ -2053,12 +2069,17 @@ function fmtStamp(iso){
   return p(d.getDate()) + '/' + p(d.getMonth()+1) + '/' + (d.getFullYear()+543) +
          ' เวลา ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ' น.';
 }
+/* ข้อความสถานะโฟลเดอร์ เก็บไว้เพื่อให้ renderSettings วาดซ้ำได้โดยไม่ลบข้อความล่าสุดทิ้ง */
+let folderState = { msg:'ยังไม่ได้เลือกโฟลเดอร์แชร์', kind:'' };
+function setFolderState(msg, kind){
+  folderState = { msg: msg, kind: kind || '' };
+  setState('cfg-fstate', folderState.msg, folderState.kind);
+}
 function renderSettings(){
-  document.getElementById('cfg-client').value = CFG.clientId;
-  document.getElementById('cfg-url').value    = CFG.folderUrl;
   document.getElementById('cfg-days').value   = CFG.remindDays;
-  document.getElementById('cfg-fid').textContent   = CFG.folderId || '—';
   document.getElementById('cfg-count').textContent = load().length + ' แผ่น';
+  document.getElementById('cfg-folder').textContent = dirHandle ? dirHandle.name : '— ยังไม่ได้เลือก —';
+  document.getElementById('cfg-device').textContent = myFileName();
   let at = null; try { at = localStorage.getItem(BACKUP_AT); } catch(e){}
   document.getElementById('cfg-last').textContent = at ? fmtStamp(at) : 'ยังไม่เคยสำรอง';
 
@@ -2066,31 +2087,9 @@ function renderSettings(){
   const bl  = document.getElementById('cfg-blocked');
   bl.hidden = !why; bl.textContent = why;
 
-  if (!CFG.clientId)
-    setState('cfg-acct', 'ยังไม่ได้ใส่ Client ID');
-  else if (gToken && Date.now() < gTokenExp)
-    setState('cfg-acct', 'เชื่อมต่อแล้ว' + (gAcct ? ' — ' + gAcct : ''), 'good');
-  else
-    setState('cfg-acct', 'ยังไม่ได้เชื่อมต่อในรอบนี้ — สิทธิ์จะหมดอายุทุกครั้งที่ปิดเบราว์เซอร์ ' +
-                         'กดปุ่มด้านล่างได้เลย (ถ้าเคยอนุญาตแล้วจะไม่ถามซ้ำ)');
+  setState('cfg-fstate', folderState.msg, folderState.kind);
 }
 function bindSettings(){
-  const cid = document.getElementById('cfg-client');
-  cid.addEventListener('change', () => {
-    CFG.clientId = cid.value.trim(); saveSettings();
-    gClient = null; gClientFor = ''; gToken = null; gTokenExp = 0;
-    renderSettings(); toast('บันทึก Client ID แล้ว');
-  });
-  const url = document.getElementById('cfg-url');
-  url.addEventListener('change', () => {
-    CFG.folderUrl = url.value.trim();
-    CFG.folderId  = parseFolderId(CFG.folderUrl);
-    saveSettings(); renderSettings();
-    setState('cfg-fstate',
-      CFG.folderId ? 'อ่านรหัสโฟลเดอร์ได้แล้ว — กด “ทดสอบการเชื่อมต่อ” เพื่อยืนยัน'
-                   : 'อ่านรหัสโฟลเดอร์จากลิงก์นี้ไม่ได้ — ต้องเป็นลิงก์ที่มี /folders/…',
-      CFG.folderId ? '' : 'bad');
-  });
   const days = document.getElementById('cfg-days');
   days.addEventListener('change', () => {
     const raw = String(days.value).trim();
@@ -2100,61 +2099,47 @@ function bindSettings(){
     days.value = CFG.remindDays; saveSettings(); toast('บันทึกค่าแล้ว');
   });
 
-  document.getElementById('cfg-connect').onclick = () => cfgRun(() => {
-    setState('cfg-acct', 'กำลังเชื่อมต่อ…', 'busy');
-    return getToken('').then(() => { toast('เชื่อมต่อบัญชี Google แล้ว'); renderSettings(); })
-                       .catch(e => setState('cfg-acct', e.message, 'bad'));
-  });
-  document.getElementById('cfg-switch').onclick = () => cfgRun(() => {
-    setState('cfg-acct', 'กำลังเปลี่ยนบัญชี…', 'busy');
-    return getToken('select_account').then(() => { toast('เปลี่ยนบัญชีแล้ว'); renderSettings(); })
-                                     .catch(e => setState('cfg-acct', e.message, 'bad'));
-  });
-  document.getElementById('cfg-signout').onclick = () => {
-    if (gToken && gisReady()){ try { google.accounts.oauth2.revoke(gToken, () => {}); } catch(e){} }
-    gToken = null; gTokenExp = 0; gAcct = '';
-    renderSettings(); toast('ออกจากบัญชีแล้ว');
-  };
-  document.getElementById('cfg-test').onclick = () => cfgRun(() => {
-    if (!CFG.folderId){ setState('cfg-fstate', 'ยังไม่ได้ตั้งโฟลเดอร์ปลายทาง', 'bad'); return; }
-    setState('cfg-fstate', 'กำลังทดสอบ…', 'busy');
-    return driveFolderInfo(CFG.folderId).then(f => {
-      if (f.mimeType !== 'application/vnd.google-apps.folder'){
-        setState('cfg-fstate', 'ลิงก์นี้ไม่ใช่โฟลเดอร์', 'bad'); return;
+  /* เลือกโฟลเดอร์ — เบราว์เซอร์บังคับว่าต้องมาจากการกดปุ่มเท่านั้น */
+  document.getElementById('cfg-pick').onclick = () => cfgRun(() =>
+    pickFolder().then(h => {
+      renderSettings();
+      if (h.name === EXPECT_FOLDER){
+        setFolderState('เลือกโฟลเดอร์ “' + h.name + '” แล้ว — กด “ทดสอบการเชื่อมต่อ” เพื่อยืนยันว่าอ่านเขียนได้จริง', 'good');
+      } else {
+        /* เตือนอย่างเดียว ไม่บล็อก เผื่อโรงพยาบาลตั้งใจใช้ชื่ออื่น */
+        setFolderState('เลือกโฟลเดอร์ “' + h.name + '” แล้ว — แต่ตัวช่วยติดตั้งสร้างโฟลเดอร์ชื่อ “' +
+          EXPECT_FOLDER + '” ไว้ ถ้าไม่ได้ตั้งใจเลือกอันนี้ ให้กดเลือกใหม่ ' +
+          'เพราะถ้าแต่ละเครื่องชี้คนละโฟลเดอร์ ข้อมูลจะไม่ตรงกัน', 'bad');
       }
-      return driveNewest().then(n => setState('cfg-fstate',
-        'ใช้งานได้ — โฟลเดอร์ “' + f.name + '” ' +
-        (n ? '(ไฟล์ล่าสุด: ' + n.name + ')' : '(ยังไม่มีไฟล์สำรองในโฟลเดอร์นี้)'), 'good'));
-    }).catch(e => setState('cfg-fstate',
-      e.message + ' — ถ้าโฟลเดอร์นี้สร้างไว้เองจากหน้าเว็บ Drive แอปจะยังมองไม่เห็น (สิทธิ์แบบจำกัด) ' +
-      'ให้กด “ใช้โฟลเดอร์ของแอป” แทน แล้วนำลิงก์ที่ได้ไปแชร์ให้เครื่องอื่น', 'bad'));
+      toast('เลือกโฟลเดอร์แชร์แล้ว');
+    }).catch(e => setFolderState(e.message, 'bad')));
+
+  document.getElementById('cfg-test').onclick = () => cfgRun(() => {
+    setFolderState('กำลังทดสอบ…', 'busy');
+    return ensureFolder(true)
+      .then(() => folderInfo())
+      .then(info => setFolderState(
+        'ใช้งานได้ — โฟลเดอร์ “' + info.name + '” มีข้อมูลจาก ' + info.count + ' เครื่อง' +
+        (info.mine ? ' (รวมเครื่องนี้ด้วย)' : ' (เครื่องนี้ยังไม่เคยสำรอง)'), 'good'))
+      .catch(e => setFolderState(e.message, 'bad'));
   });
-  document.getElementById('cfg-mkfolder').onclick = () => cfgRun(() => {
-    if (!confirm('ใช้โฟลเดอร์ “' + APP_FOLDER + '” ในไดรฟ์ของบัญชีที่เชื่อมต่ออยู่ ' +
-                 'เป็นโฟลเดอร์ปลายทางแทนของเดิม?\n\n' +
-                 'ถ้ามีโฟลเดอร์นี้อยู่แล้วจะใช้อันเดิม จะสร้างใหม่ก็ต่อเมื่อยังไม่มีเท่านั้น')) return;
-    setState('cfg-fstate', 'กำลังหาโฟลเดอร์เดิม…', 'busy');
-    return driveFindFolders(APP_FOLDER).then(found => {
-      if (found.length) return { f: found[0], made: false, dup: found.length };
-      setState('cfg-fstate', 'ไม่พบของเดิม — กำลังสร้างใหม่…', 'busy');
-      return driveMakeFolder(APP_FOLDER).then(f => ({ f, made: true, dup: 0 }));
-    }).then(res => {
-      CFG.folderId  = res.f.id;
-      CFG.folderUrl = res.f.webViewLink || ('https://drive.google.com/drive/folders/' + res.f.id);
-      saveSettings(); renderSettings();
-      setState('cfg-fstate', res.made
-        ? 'สร้างโฟลเดอร์ “' + res.f.name + '” แล้ว — คัดลอกลิงก์ในช่องด้านบนไปตั้งค่าที่เครื่องอื่นได้เลย'
-        : 'มีโฟลเดอร์ “' + res.f.name + '” อยู่แล้ว จึงใช้อันเดิม ไม่ได้สร้างซ้ำ' +
-          (res.dup > 1 ? ' — พบชื่อซ้ำกัน ' + res.dup + ' โฟลเดอร์ เลือกอันที่สร้างก่อนสุด ' +
-                         'ควรเข้าไปลบที่เหลือทิ้งใน Drive' : ''),
-        'good');
-    }).catch(e => setState('cfg-fstate', e.message, 'bad'));
-  });
+
+  document.getElementById('cfg-forget').onclick = () => {
+    if (!confirm('เลิกใช้โฟลเดอร์แชร์นี้?\n\n' +
+                 'ไฟล์ในโฟลเดอร์จะไม่ถูกลบ และข้อมูลในเครื่องนี้ยังอยู่ครบ ' +
+                 'แค่ต้องเลือกโฟลเดอร์ใหม่ก่อนถึงจะสำรอง/ดึงข้อมูลได้อีก')) return;
+    cfgRun(() => forgetFolder().then(() => {
+      renderSettings();
+      setFolderState('ยังไม่ได้เลือกโฟลเดอร์แชร์', '');
+      toast('เลิกใช้โฟลเดอร์นี้แล้ว');
+    }));
+  };
 }
 
 document.getElementById('btn-search').onclick = renderHistory;
 document.getElementById('btn-reset').onclick = () => {
   document.getElementById('q-name').value = '';
+  onlyNoHN = false;                    /* เดิมไม่ได้ล้างตัวนี้ ทำให้กดล้างแล้วยังกรองค้างอยู่ */
   const f = document.querySelector('.dfilter .dfield');
   if (f) setDateField(f, '', true);
   renderHistory();
@@ -2320,7 +2305,7 @@ document.getElementById('clock-later').onclick = () => {
   document.getElementById('clock-bar').hidden = true;
 };
 
-/* ---- แจ้งสถานะออฟไลน์ ให้เจ้าหน้าที่รู้ว่าทำไมปุ่ม Drive ใช้ไม่ได้ ---- */
+/* ---- แจ้งสถานะออฟไลน์ บอกให้รู้ว่าตอนนี้ไม่มีเน็ต (แต่ซิงก์ LAN ยังทำงาน) ---- */
 function showOnlineState(){
   const bar = document.getElementById('offline-bar');
   if (bar) bar.hidden = navigator.onLine !== false;
@@ -2341,6 +2326,11 @@ document.getElementById('btn-drive-up').onclick   = doDriveUp;
 document.getElementById('btn-drive-down').onclick = doDriveDown;
 bindSettings();
 renderSettings();
+loadFolderHandle().then(h => {
+  if (!h) return;
+  setFolderState('เลือกโฟลเดอร์ “' + h.name + '” ไว้แล้ว — กด “ทดสอบการเชื่อมต่อ” เพื่อยืนยันว่ายังเข้าถึงได้', '');
+  renderSettings();
+}).catch(() => {});
 if (migrated) setTimeout(() => toast('แปลงข้อมูลเดิม ' + migrated + ' แผ่นมาใช้รูปแบบใหม่แล้ว (ข้อมูลชุดเดิมยังเก็บไว้)'), 400);
 document.querySelectorAll('form').forEach(f => f.addEventListener('submit', e => e.preventDefault()));
 </script>
