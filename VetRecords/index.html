@@ -219,9 +219,11 @@ table.med col.d1{width:100px}   /* ชื่อยา */
 table.med col.d2{width:88px}    /* ขนาด  */
 table.med col.d3{width:62px}    /* ทาง   */
 table.wide{table-layout:fixed}
-table.wide col.lbl{width:150px}
 #t2-feed{table-layout:fixed}
-#t2-feed col.lbl{width:200px}
+/* ให้ยาว/หัตถการ, Fluid และการป้อนอาหาร ใช้หัวแถวกว้างเท่าตารางสัญญาณชีพ
+   ช่องเวลาแคบลงได้ไม่เสียหาย เพราะเป็นแค่ช่องติ๊ก ไม่ได้พิมพ์ข้อความลงไป */
+table.wide col.lbl,
+#t2-feed col.lbl{width:250px}
 
 /* ---------- History ---------- */
 .hist-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
