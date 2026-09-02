@@ -50,6 +50,11 @@ button{font:inherit;cursor:pointer}
   border-bottom:3px solid transparent;font-weight:600;font-size:14px;
 }
 .tabs button.active{color:#fff;border-bottom-color:var(--blue-lt);background:rgba(255,255,255,.10)}
+/* ลิงก์คู่มือ: หน้าตาเหมือนแท็บอื่นแต่ดันไปชิดขวา จะได้ไม่ปนกับแท็บที่กดสลับหน้าจริง ๆ */
+.tabs .tab-link{margin-left:auto;display:flex;align-items:center;gap:6px;
+  color:#CFE6F7;text-decoration:none;padding:10px 16px;font-weight:600;font-size:14px;
+  border-bottom:3px solid transparent}
+.tabs .tab-link:hover{color:#fff;background:rgba(255,255,255,.10)}
 .toolbar{
   display:flex;gap:8px;align-items:center;flex-wrap:wrap;
   padding:10px 0 14px;
@@ -422,6 +427,7 @@ table.vals th:first-child,table.vals td:first-child{text-align:left;white-space:
   <button data-tab="form2">ฟอร์มที่ 2 — Treatment &amp; Monitoring</button>
   <button data-tab="history">ประวัติที่บันทึกไว้</button>
   <button data-tab="settings">ตั้งค่า</button>
+  <a class="tab-link" id="manual-link" href="manual.pdf" target="_blank" rel="noopener">📘 คู่มือการใช้งาน</a>
 </nav>
 
 <div class="topbar off no-print" id="offline-bar" hidden>
@@ -2334,6 +2340,20 @@ function showOnlineState(){
   const bar = document.getElementById('offline-bar');
   if (bar) bar.hidden = navigator.onLine !== false;
 }
+/* ---- ปุ่มคู่มือ: ถ้ายังไม่ได้อัปโหลด manual.pdf ให้ซ่อนปุ่มไปเลย ----
+   ดีกว่าปล่อยให้กดแล้วไปเจอหน้า 404 ของ GitHub ซึ่งคนใช้งานอ่านไม่ออกว่าเกิดอะไรขึ้น
+   ถ้า fetch ล้มเอง (ออฟไลน์ หรือเปิดแบบ file://) ให้คงปุ่มไว้
+   เพราะไฟล์อาจอยู่ในแคชของ service worker หรือวางอยู่ข้างไฟล์แอปแล้ว */
+(function checkManual(){
+  const a = document.getElementById('manual-link');
+  if (!a) return;
+  try {
+    fetch('manual.pdf', { method:'HEAD' })
+      .then(res => { if (!res.ok) a.hidden = true; })
+      .catch(() => {});
+  } catch(e){}
+})();
+
 window.addEventListener('online', showOnlineState);
 window.addEventListener('offline', showOnlineState);
 showOnlineState();
