@@ -159,6 +159,10 @@ td.pair .cp .sep{flex:0 0 auto;display:flex;align-items:center;padding:0 5px;
 td.pair .cp .unit{flex:0 0 auto;display:flex;align-items:center;padding:0 6px 0 2px;
   font-size:11.5px;color:#5B7A94}
 td.pair.cost .cp input{text-align:right;font-variant-numeric:tabular-nums}
+/* ประเมินค่ารักษาใส่เป็นช่วงราคาได้ ค่าต่ำชิดขวา ค่าสูงชิดซ้าย จะได้ขนาบขีดคั่นตรงกลาง */
+td.pair.cost .cp input.hi{text-align:left}
+td.pair.cost .cp .dash{flex:0 0 auto;display:flex;align-items:center;padding:0 4px;
+  font-size:11.5px;color:#5B7A94}
 /* ชนิด/พันธุ์ ใช้ที่น้อย — ยกความกว้างไปให้ช่องชื่อผู้ดูแล/ผู้รับผิดชอบแทน */
 table.info td.pair.duo{width:13%}
 table.info td.care{width:21%}
@@ -389,6 +393,10 @@ table.vals th:first-child,table.vals td:first-child{text-align:left;white-space:
   td.pair .cp{min-width:0}
   td.pair .cp input.tel{flex:0 0 56%;min-width:0}
   td.pair .cp .sep{font-size:0;padding:0 1px}   /* บนกระดาษเหลือแค่เส้นคั่น คืนที่ให้ข้อความ */
+  td.pair.cost .cp .dash{font-size:8px;padding:0 2px}
+  /* ราคาเดียว ไม่ใช่ช่วง — ขีดคั่นต้องหายไปจากกระดาษ ไม่ทิ้งขีดค้าง */
+  td.pair.cost .cp.no-max .dash{display:none}
+  td.pair.cost .cp.no-max input.hi{display:none}
   .sheet h2.title{font-size:12.5px}
   .sheet h2.title .en{display:block;line-height:1.25}   /* ชื่อภาษาอังกฤษขึ้นบรรทัดใหม่เต็มวลี */
   .sheet-top{min-height:50px;margin-bottom:4px;padding:0 62px}
@@ -583,8 +591,10 @@ table.vals th:first-child,table.vals td:first-child{text-align:left;white-space:
             </span>
           </div></td>
           <td class="k nw">ประเมินค่ารักษา</td>
-          <td class="pair cost"><div class="cp">
-            <input name="f2_cost" class="num" inputmode="numeric" title="ประเมินค่ารักษาต่อวัน (บาท) — ใส่เครื่องหมายจุลภาคให้อัตโนมัติ">
+          <td class="pair cost"><div class="cp no-max">
+            <input name="f2_cost" class="num" inputmode="numeric" title="ประเมินค่ารักษาต่อวัน (บาท) — ถ้าเป็นช่วงราคา ให้ใส่ค่าต่ำสุดที่ช่องนี้ ใส่เครื่องหมายจุลภาคให้อัตโนมัติ">
+            <span class="dash">–</span>
+            <input name="f2_cost_max" class="num hi" inputmode="numeric" title="ค่าสูงสุดของช่วงราคา — ถ้าเป็นราคาเดียวไม่ต้องกรอกช่องนี้ ขีดคั่นจะไม่ขึ้นตอนพิมพ์">
             <span class="unit">บาท/วัน</span>
           </div></td>
         </tr>
@@ -859,8 +869,19 @@ function formatThousands(el){
 const formatNums = scope =>
   (scope || document).querySelectorAll('input.num').forEach(formatThousands);
 
+/* ประเมินค่ารักษาเป็นช่วงราคา — ถ้าไม่ได้ใส่ค่าสูงสุด ต้องไม่มีขีดคั่นค้างอยู่บนกระดาษ */
+function syncCostRange(){
+  const cp = document.querySelector('#form2 td.pair.cost .cp');
+  if (!cp) return;
+  const hi = cp.querySelector('input.hi');
+  cp.classList.toggle('no-max', !hi || !hi.value.trim());
+}
+
 document.addEventListener('input', e => {
-  if (e.target.classList && e.target.classList.contains('num')) formatThousands(e.target);
+  if (e.target.classList && e.target.classList.contains('num')){
+    formatThousands(e.target);
+    syncCostRange();
+  }
 });
 
 /* ============ ตารางแบบตายตัว (fixed rows) ============ */
@@ -1089,6 +1110,7 @@ function apply(formId, data){
   DYN_OF[formId].forEach(k => renderDyn(k, data && data.dyn ? data.dyn[k] : []));
   syncDateFields(f);
   formatNums(f);          /* ค่าที่โหลดมาให้จัดรูปแบบตัวเลขด้วย */
+  syncCostRange();
 }
 
 function clearForm(formId){
