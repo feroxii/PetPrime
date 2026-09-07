@@ -235,6 +235,12 @@ table.wide col.lbl,
 .hist-tools input{
   border:1px solid var(--line);border-radius:6px;padding:7px 10px;font:inherit;font-size:13px;min-width:200px;
 }
+/* ตัวบอกสถานะการซิงก์บนแถบเครื่องมือ */
+.sync-state{font-size:12.5px;font-weight:600;color:#5B7A94;padding:4px 10px;
+  border:1px solid var(--line-soft);border-radius:99px;background:#fff;white-space:nowrap}
+.sync-state.good{color:#1C5B33;background:#E8F5EC;border-color:#BFE0CB}
+.sync-state.warn{color:#8A5A00;background:#FFF6E0;border-color:#EBD9A8}
+.sync-state.off{color:#7A8794;background:#F2F4F7}
 table.hist{table-layout:auto}
 table.hist td{padding:5px 8px;font-size:13px;height:auto}
 table.hist th{padding:6px 8px}
@@ -261,6 +267,8 @@ table.hist th{padding:6px 8px}
 .set-card .hint{font-size:12.5px;color:#5B7A94;margin:0 0 10px;line-height:1.6}
 .set-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
 .set-row > label{font-size:13px;min-width:120px;color:var(--navy);font-weight:600}
+.set-row input[type=email],
+.set-row input[type=password],
 .set-row input[type=text]{flex:1;min-width:250px;border:1px solid var(--line);border-radius:6px;
   padding:7px 10px;font:inherit;font-size:13px}
 .set-row input[type=number]{width:72px;border:1px solid var(--line);border-radius:6px;
@@ -432,7 +440,7 @@ table.vals th:first-child,table.vals td:first-child{text-align:left;white-space:
 
 <div class="topbar off no-print" id="offline-bar" hidden>
   <span>ตอนนี้ไม่ได้ต่ออินเทอร์เน็ต — ใช้งานได้ตามปกติทุกอย่าง
-        กรอก บันทึก และพิมพ์ได้ตามปกติ ส่วนการสำรอง/ดึงข้อมูลจะกลับมาทำงานเมื่อเน็ตกลับมา</span>
+        กรอก บันทึก และพิมพ์ได้ตามปกติ ส่วนการซิงก์กับเครื่องอื่นจะทำงานต่อเองเมื่อเน็ตกลับมา</span>
 </div>
 
 <div class="topbar bad no-print" id="clock-bar" hidden>
@@ -646,8 +654,8 @@ table.vals th:first-child,table.vals td:first-child{text-align:left;white-space:
       <button class="btn" id="btn-search">ค้นหา</button>
       <button class="btn" id="btn-reset">ล้างเงื่อนไข</button>
       <span class="spacer"></span>
-      <button class="btn primary" id="btn-drive-up">⬆ สำรองข้อมูล</button>
-      <button class="btn primary" id="btn-drive-down">⬇ ดึงข้อมูลล่าสุด</button>
+      <span class="sync-state" id="sync-state">—</span>
+      <button class="btn primary" id="btn-sync">⟳ ซิงก์เดี๋ยวนี้</button>
       <span style="width:1px;height:22px;background:var(--line-soft);margin:0 3px"></span>
       <button class="btn" id="btn-export">⬇ สำรองเป็นไฟล์</button>
       <button class="btn" id="btn-import">⬆ นำเข้าจากไฟล์</button>
@@ -664,26 +672,36 @@ table.vals th:first-child,table.vals td:first-child{text-align:left;white-space:
 <!-- ================= SETTINGS ================= -->
 <section class="panel no-print" id="tab-settings">
   <div class="sheet">
-    <h2 class="title">ตั้งค่าโฟลเดอร์แชร์ของโรงพยาบาล</h2>
+    <h2 class="title">ตั้งค่าการเชื่อมต่อส่วนกลาง</h2>
 
     <div class="set-state bad" id="cfg-blocked" hidden></div>
 
     <div class="set-card">
-      <h3>1. โฟลเดอร์แชร์ที่ใช้ร่วมกัน</h3>
-      <div class="set-row"><label>โฟลเดอร์</label><span class="set-val" id="cfg-folder">— ยังไม่ได้เลือก —</span></div>
-      <div class="set-row"><label>ไฟล์ของเครื่องนี้</label><span class="set-val" id="cfg-device">—</span></div>
-      <div class="set-state" id="cfg-fstate">ยังไม่ได้เลือกโฟลเดอร์แชร์</div>
+      <h3>1. บัญชีสำหรับซิงก์ข้อมูล</h3>
+      <p class="hint">ทุกเครื่องใช้บัญชีกลางของโรงพยาบาลบัญชีเดียวกัน เข้าสู่ระบบครั้งเดียวต่อเครื่อง
+         หลังจากนั้นข้อมูลจะซิงก์ให้เองโดยไม่ต้องกดอะไร</p>
+      <div class="set-row"><label>เข้าสู่ระบบเป็น</label><span class="set-val" id="cfg-account">—</span></div>
+      <div class="set-row"><label>รหัสเครื่องนี้</label><span class="set-val" id="cfg-device">—</span></div>
+      <div class="set-row"><label>รอส่งขึ้น</label><span class="set-val" id="cfg-waiting">—</span></div>
+      <div class="set-row"><label>ที่เก็บในเครื่อง</label><span class="set-val" id="cfg-persist">—</span></div>
+      <div class="set-state" id="cfg-fstate">ยังไม่ได้เข้าสู่ระบบ</div>
+      <div class="set-row" id="cfg-login-row">
+        <input type="email" id="cfg-email" placeholder="อีเมลบัญชีกลางของโรงพยาบาล" autocomplete="username">
+        <input type="password" id="cfg-pass" placeholder="รหัสผ่าน" autocomplete="current-password">
+        <button class="btn primary" id="cfg-login">เข้าสู่ระบบ</button>
+      </div>
       <div class="set-row">
-        <button class="btn primary" id="cfg-pick">เลือกโฟลเดอร์แชร์</button>
         <button class="btn" id="cfg-test">ทดสอบการเชื่อมต่อ</button>
-        <button class="btn" id="cfg-forget">เลิกใช้โฟลเดอร์นี้</button>
+        <button class="btn" id="cfg-resend">ส่งข้อมูลทั้งหมดขึ้นใหม่</button>
+        <button class="btn" id="cfg-repull">ดึงข้อมูลทั้งหมดใหม่</button>
+        <button class="btn" id="cfg-logout" hidden>ออกจากระบบ</button>
       </div>
     </div>
 
     <div class="set-card">
-      <h3>2. การสำรองข้อมูล</h3>
-      <div class="set-row"><label>สำรองล่าสุด</label><span class="set-val" id="cfg-last">—</span></div>
-      <div class="set-row"><label>แผ่นที่เก็บอยู่</label><span class="set-val" id="cfg-count">—</span></div>
+      <h3>2. การสำรองเป็นไฟล์</h3>
+      <div class="set-row"><label>ซิงก์ล่าสุด</label><span class="set-val" id="cfg-last">—</span></div>
+      <div class="set-row"><label>แผ่นในเครื่องนี้</label><span class="set-val" id="cfg-count">—</span></div>
       <div class="set-row">
         <label for="cfg-days">เตือนเมื่อเว้นไป</label>
         <input type="number" id="cfg-days" min="1" max="30" step="1"><span style="font-size:13px">วัน</span>
@@ -1202,6 +1220,8 @@ function saveRecord(formId, quiet){
   const rec = { id, form:formId, meta, saved:new Date().toISOString(), data };
   if (i >= 0) list[i] = rec; else list.push(rec);
   save(list);
+  dirtyAdd([id]);        /* เข้าคิวส่งขึ้นส่วนกลาง */
+  syncSoon();
   currentId[formId] = id;
   setStatus(formId, `บันทึกล่าสุด: ${fmtTime(rec.saved)}`);
   renderHistory();
@@ -1333,16 +1353,18 @@ function deleteRecord(id){
   const rec = load().find(r => r.id === id);
   if (!rec) return;
   if (!confirm(`ลบข้อมูลของ "${rec.meta.name}" วันที่ ${rec.meta.date} ?\n\n` +
-               'เมื่อกดสำรองข้อมูลครั้งถัดไป เครื่องอื่นที่ดึงข้อมูลจะลบตามด้วย')) return;
+               'เครื่องอื่นจะลบตามด้วยเมื่อซิงก์รอบถัดไป')) return;
   /* เก็บเป็น "รอยลบ" ไว้แทนการเอาออกทั้งแถว มิฉะนั้นการลบจะไม่เดินทางไปเครื่องอื่น
      และแผ่นที่ลบไปจะถูกดึงกลับมาทุกครั้งที่ sync — เนื้อข้อมูลถูกทิ้ง เหลือไว้แค่ที่ใช้จับคู่ */
   save(loadAll().map(r => r.id === id
     ? { id:r.id, form:r.form, meta:tombMeta(r.meta), saved:new Date().toISOString(),
         data:{}, deleted:true }
     : r));
+  dirtyAdd([id]);        /* รอยลบต้องเดินทางไปเครื่องอื่นด้วย */
+  syncSoon();
   if (currentId[rec.form] === id) currentId[rec.form] = null;
   renderHistory();
-  toast('ลบข้อมูลแล้ว — กด “⬆ สำรองข้อมูล” เพื่อให้เครื่องอื่นลบตาม');
+  toast('ลบข้อมูลแล้ว — เครื่องอื่นจะลบตามเมื่อซิงก์รอบถัดไป');
 }
 
 /* ============ ประวัติ ============ */
@@ -1793,106 +1815,26 @@ document.addEventListener('click', e => {
 });
 
 /* =======================================================================
-   ที่เก็บข้อมูลกลาง: โฟลเดอร์ที่ OneDrive ซิงก์ให้ระหว่างเครื่อง
-   ใช้ File System Access API เขียน/อ่านไฟล์ตรง ๆ ไม่ผ่านคลาวด์ ไม่มีบัญชีให้ล็อกอิน
-   ข้อมูลคนไข้จึงไม่ออกนอกโรงพยาบาล และการซิงก์ไม่ต้องใช้อินเทอร์เน็ต
+   ที่เก็บข้อมูลกลาง: Supabase
+   -----------------------------------------------------------------------
+   หลักการ "local-first": localStorage ยังเป็นที่เก็บหลักเหมือนเดิมทุกอย่าง
+   Supabase เป็นแค่ตัวส่งข้อมูลระหว่างเครื่อง ไม่ใช่แหล่งความจริง
+   เน็ตล่ม/ล็อกอินหลุด ยังกรอก บันทึก ค้นประวัติ และพิมพ์ได้ครบตามปกติ
+
+   จงใจไม่โหลดไลบรารี supabase-js จาก CDN — เรียก REST ตรง ๆ ด้วย fetch
+   เพราะแอปนี้ไม่มีสคริปต์ภายนอกเลยแม้แต่ตัวเดียว และ sw.js ไม่แคชของข้ามโดเมน
+   ถ้าพึ่ง CDN แล้วเน็ตล่ม สคริปต์จะโหลดไม่ได้และแอปเปิดไม่ขึ้นทั้งตัว
    ======================================================================= */
 
-/* ---- ที่เก็บ handle ของโฟลเดอร์ ----
-   FileSystemDirectoryHandle เก็บใน localStorage ไม่ได้ (เก็บได้แต่สตริง) ต้องใช้ IndexedDB */
-const FSDB = 'vetrec.fs', FSKEY = 'folder';
-function idb(){
-  return new Promise((res, rej) => {
-    const q = indexedDB.open(FSDB, 1);
-    q.onupgradeneeded = () => q.result.createObjectStore('h');
-    q.onsuccess = () => res(q.result);
-    q.onerror   = () => rej(q.error || new Error('เปิดที่เก็บภายในไม่ได้'));
-  });
-}
-function idbDo(mode, fn){
-  return idb().then(db => new Promise((res, rej) => {
-    const tx = db.transaction('h', mode);
-    const rq = fn(tx.objectStore('h'));
-    rq.onsuccess = () => res(rq.result);
-    rq.onerror   = () => rej(rq.error);
-  }));
-}
-const idbGet = k       => idbDo('readonly',  st => st.get(k));
-const idbSet = (k, v)  => idbDo('readwrite', st => st.put(v, k));
-const idbDel = k       => idbDo('readwrite', st => st.delete(k));
-
-let dirHandle = null;
-const fsSupported = () => typeof window !== 'undefined' && 'showDirectoryPicker' in window;
-
-/* บอกเหตุผลที่ยังใช้โฟลเดอร์แชร์ไม่ได้ (คืนค่าว่าง = ใช้ได้) */
-function driveBlockedReason(){
-  if (location.protocol === 'file:')
-    return 'ตอนนี้เปิดไฟล์จากเครื่องโดยตรง (file://) — เบราว์เซอร์ไม่ยอมให้เขียนโฟลเดอร์จากที่อยู่แบบนี้ ' +
-           'ต้องเปิดแอปผ่านเว็บก่อน ระหว่างนี้ยังใช้ “สำรองเป็นไฟล์ / นำเข้าจากไฟล์” ได้ตามปกติ';
-  if (location.protocol !== 'https:' && !window.isSecureContext)
-    return 'ที่อยู่ของหน้านี้ไม่ปลอดภัย (ต้องเป็น https) เบราว์เซอร์จึงไม่ยอมให้เข้าถึงโฟลเดอร์';
-  if (!fsSupported())
-    return 'เบราว์เซอร์นี้เปิดโฟลเดอร์แชร์ไม่ได้ — ต้องใช้ Microsoft Edge หรือ Google Chrome ' +
-           '(Firefox กับ Safari ยังไม่รองรับ) ระหว่างนี้ยังใช้ “สำรองเป็นไฟล์ / นำเข้าจากไฟล์” ได้';
-  return '';
-}
-
-async function loadFolderHandle(){
-  if (dirHandle) return dirHandle;
-  try { dirHandle = (await idbGet(FSKEY)) || null; } catch(e){ dirHandle = null; }
-  return dirHandle;
-}
-
-/* เลือกโฟลเดอร์แชร์ (ต้องกดจากปุ่มเท่านั้น เบราว์เซอร์บังคับ) */
-async function pickFolder(){
-  const why = driveBlockedReason();
-  if (why) throw new Error(why);
-  let h;
-  try {
-    h = await window.showDirectoryPicker({ id:'vetrec-share', mode:'readwrite' });
-  } catch(e){
-    if (e && e.name === 'AbortError') throw new Error('ยกเลิกการเลือกโฟลเดอร์');
-    throw new Error('เปิดหน้าต่างเลือกโฟลเดอร์ไม่สำเร็จ — ' + ((e && e.message) || e));
-  }
-  if (await h.requestPermission({ mode:'readwrite' }) !== 'granted')
-    throw new Error('ไม่ได้รับสิทธิ์อ่าน/เขียนโฟลเดอร์นี้');
-  dirHandle = h;
-  try { await idbSet(FSKEY, h); } catch(e){}
-  return h;
-}
-
-async function forgetFolder(){
-  dirHandle = null;
-  try { await idbDel(FSKEY); } catch(e){}
-}
-
-/* ---- ต้องเรียกเป็นสิ่งแรกในตัวจัดการปุ่ม ----
-   requestPermission ต้องการ user activation ซึ่งหมดอายุถ้ารอ await อย่างอื่นไปก่อนหลายชั้น
-   จึงห้ามเรียกกลางทาง ต้องเรียกทันทีที่ผู้ใช้กดปุ่ม */
-async function ensureFolder(interactive){
-  const why = driveBlockedReason();
-  if (why) throw new Error(why);
-  const h = await loadFolderHandle();
-  if (!h) throw new Error('ยังไม่ได้เลือกโฟลเดอร์แชร์ — ไปที่แท็บ “ตั้งค่า” แล้วกด “เลือกโฟลเดอร์แชร์” ก่อน');
-  const opt = { mode:'readwrite' };
-  let p;
-  try { p = await h.queryPermission(opt); } catch(e){ p = 'prompt'; }
-  if (p === 'granted') return h;
-  if (!interactive)
-    throw new Error('ต้องอนุญาตให้เข้าถึงโฟลเดอร์ก่อน — กดปุ่มอีกครั้งแล้วกด “แก้ไขไฟล์”');
-  try { p = await h.requestPermission(opt); } catch(e){ p = 'denied'; }
-  if (p !== 'granted') throw new Error('ไม่ได้รับสิทธิ์เข้าถึงโฟลเดอร์แชร์');
-  return h;
-}
+/* ---- ตั้งค่าโปรเจกต์ Supabase — แก้ตรงนี้ที่เดียว ----
+   anon key เปิดเผยได้ ออกแบบมาให้อยู่ในหน้าเว็บ ความปลอดภัยอยู่ที่ RLS ในฐานข้อมูล
+   เว้นว่างไว้ = ปิดการซิงก์ แอปทำงานแบบเครื่องเดียวได้ตามปกติ */
+const SB_URL = 'https://jzroqvabzkkjsmodxlbp.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6cm9xdmFiemtranNtb2R4bGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3NTkwNzksImV4cCI6MjEwNDMzNTA3OX0.JeN3PqVm_uptVro0YC5lIQqJh5ysWXgLaNBVRgEJhTI';
+const sbReady = () => !!(SB_URL && SB_KEY);
 
 /* ---- รหัสประจำเครื่อง ----
-   แต่ละเครื่องเป็นเจ้าของไฟล์ของตัวเองไฟล์เดียว ชื่อ vet-records-<รหัส>.json
-   ไม่มีสองเครื่องเขียนไฟล์เดียวกัน การเขียนชนกันจึงเกิดไม่ได้เลยโดยโครงสร้าง
-   และจำนวนไฟล์คงที่เท่าจำนวนเครื่อง ไม่โตขึ้นเรื่อย ๆ จนพื้นที่เต็ม */
-/* ชื่อโฟลเดอร์ที่ตัวช่วยติดตั้งสร้างไว้ — File System Access ไม่ยอมให้แอปเห็นเส้นทางเต็ม
-   เห็นได้แค่ชื่อโฟลเดอร์ จึงใช้ชื่อนี้เป็นตัวยืนยันคร่าว ๆ ว่าเลือกถูกอันหรือเปล่า */
-const EXPECT_FOLDER = 'PetPrime-VetRecords';
-
+   ไม่ได้ใช้ตั้งชื่อไฟล์แล้ว เหลือไว้ประทับลงแถวว่าเครื่องไหนเขียนล่าสุด ไว้ไล่ปัญหา */
 const DEVICE_KEY = 'vetrec.deviceId';
 function deviceId(){
   let id = null;
@@ -1903,115 +1845,341 @@ function deviceId(){
   }
   return id;
 }
-const myFileName = () => 'vet-records-' + deviceId() + '.json';
 
-const BACKUP_RE = /^vet-records-.*\.json$/i;
-
-function fsErr(e){
-  const n = e && e.name;
-  if (n === 'NotFoundError')     return new Error('เปิดโฟลเดอร์แชร์ไม่ได้ — โฟลเดอร์อาจถูกย้าย ลบ หรือ OneDrive ยังไม่พร้อม');
-  if (n === 'NotAllowedError')   return new Error('ไม่มีสิทธิ์เข้าถึงโฟลเดอร์แชร์ — กดปุ่มอีกครั้งแล้วกดอนุญาต');
-  if (n === 'NoModificationAllowedError' || n === 'InvalidStateError')
-    return new Error('เขียนลงโฟลเดอร์แชร์ไม่ได้ — อาจมีโปรแกรมอื่นเปิดไฟล์ค้างไว้ หรือโฟลเดอร์เป็นแบบอ่านอย่างเดียว');
-  return new Error('ติดต่อโฟลเดอร์แชร์ไม่ได้ — ' + ((e && e.message) || e));
-}
-
-/* จำเวลาแก้ไขไฟล์ที่อ่านไปแล้ว รอบต่อไปข้ามไฟล์ที่ไม่เปลี่ยน
-   ที่ข้อมูลสะสมเยอะ ๆ ไฟล์ละหลายสิบ MB การอ่านซ้ำทุกครั้งจะช้าโดยไม่จำเป็น */
-const seenFiles = new Map();
-
-/* รายชื่อไฟล์สำรองในโฟลเดอร์ เรียงใหม่ไปเก่า */
-async function driveBackupFiles(){
-  const dir = await ensureFolder(false);
-  const out = [];
+/* ---- ขอพื้นที่เก็บแบบถาวร ----
+   ถ้าไม่ขอ เบราว์เซอร์มีสิทธิ์เคลียร์ localStorage ทิ้งเองตอนเครื่องพื้นที่ใกล้เต็ม
+   ซึ่งแปลว่าเวชระเบียนของเครื่องนั้นหายไปเฉย ๆ ขอไม่ได้ก็ไม่เป็นไร แค่เสี่ยงเท่าเดิม */
+let persistState = 'ยังไม่ทราบ';
+function askPersist(){
   try {
-    for await (const [name, h] of dir.entries()){
-      if (h.kind !== 'file' || !BACKUP_RE.test(name)) continue;
-      let f;
-      try { f = await h.getFile(); } catch(e){ continue; }   /* ไฟล์ถูกลบระหว่างไล่อ่าน ก็ข้ามไป */
-      out.push({ name, handle:h, modified:f.lastModified, size:f.size });
-    }
-  } catch(e){ throw fsErr(e); }
-  out.sort((a, b) => b.modified - a.modified || String(b.name).localeCompare(String(a.name)));
-  return out;
-}
-async function driveGet(f){
-  let text;
-  try { text = await (await f.handle.getFile()).text(); }
-  catch(e){ throw fsErr(e); }
-  try { return JSON.parse(text); }
-  catch(e){ throw new Error('อ่านไฟล์ “' + f.name + '” ไม่ได้ — เนื้อไฟล์เสีย หรือไม่ใช่ไฟล์สำรองของแอป'); }
-}
-async function driveUpload(){
-  const dir = await ensureFolder(false);
-  if (!loadAll().length)
-    throw new Error('เครื่องนี้ยังไม่มีแผ่นบันทึก จึงไม่มีอะไรให้สำรอง — ' +
-                    'ถ้าต้องการข้อมูลจากเครื่องอื่น ให้กด “⬇ ดึงข้อมูลล่าสุด” แทน');
-  const name = myFileName();
-  try {
-    const fh = await dir.getFileHandle(name, { create:true });
-    const w  = await fh.createWritable();
-    await w.write(JSON.stringify(loadAll(), null, 2));
-    await w.close();
-  } catch(e){ throw fsErr(e); }
-  return { name };
-}
-async function folderInfo(){
-  const dir = await ensureFolder(false);
-  const files = await driveBackupFiles();
-  const mine = files.some(f => f.name === myFileName());
-  return { name: dir.name, count: files.length, mine: mine, newest: files[0] || null };
+    if (!navigator.storage || !navigator.storage.persist) return;
+    navigator.storage.persisted().then(function(has){
+      if (has){ persistState = 'ถาวร (เบราว์เซอร์จะไม่ลบทิ้งเอง)'; return; }
+      navigator.storage.persist().then(function(granted){
+        persistState = granted ? 'ถาวร (เบราว์เซอร์จะไม่ลบทิ้งเอง)'
+                               : 'ยังไม่ถาวร — ควรติดตั้งเป็นแอปเพื่อให้ได้สิทธิ์นี้';
+      }).catch(function(){});
+    }).catch(function(){});
+  } catch(e){}
 }
 
-/* ---------------------------------------------------------------
-   นาฬิกาเครื่องเพี้ยน = อันตรายเงียบ
-   กติกา "ใครบันทึกทีหลังชนะ" ใช้นาฬิกาของเครื่องที่กรอก ถ้าเครื่องไหนตั้งเวลาไม่ตรง
-   งานทั้งเวรของเครื่องนั้นอาจถูกทับหายโดยไม่มีใครรู้ตัว
-   ไม่มีเซิร์ฟเวอร์ให้ถามเวลาจริงแล้ว จึงเทียบกันเองระหว่างเครื่อง:
-   ถ้าเจอแผ่นที่บันทึก "ล้ำอนาคต" เทียบกับนาฬิกาเครื่องนี้ แปลว่ามีเครื่องหนึ่งตั้งเวลาผิดแน่ ๆ
-   --------------------------------------------------------------- */
+/* ---- โทเคนล็อกอิน ---- */
+const AUTH_KEY = 'vetrec.auth';
+let auth = null;                /* { access_token, refresh_token, email } */
+function loadAuth(){
+  try { auth = JSON.parse(localStorage.getItem(AUTH_KEY)) || null; } catch(e){ auth = null; }
+  return auth;
+}
+function saveAuth(a){
+  auth = a;
+  try {
+    if (a) localStorage.setItem(AUTH_KEY, JSON.stringify(a));
+    else localStorage.removeItem(AUTH_KEY);
+  } catch(e){}
+}
+const signedIn = () => !!(auth && auth.access_token);
+
+/* ---- เรียก REST ของ Supabase ----
+   เจอ 401 ให้ต่ออายุโทเคนแล้วยิงซ้ำ "ครั้งเดียว" กันวนไม่รู้จบ */
+async function sbCall(pathname, opts, retried){
+  if (!sbReady()) throw new Error('ยังไม่ได้ตั้งค่าที่เก็บข้อมูลกลางในไฟล์แอป');
+  opts = opts || {};
+  const head = Object.assign({
+    'apikey': SB_KEY,
+    'Content-Type': 'application/json'
+  }, opts.headers || {});
+  if (signedIn()) head['Authorization'] = 'Bearer ' + auth.access_token;
+
+  let res;
+  try {
+    res = await fetch(SB_URL + pathname, {
+      method: opts.method || 'GET', headers: head, body: opts.body
+    });
+  } catch(e){
+    throw new Error('ต่ออินเทอร์เน็ตไม่ได้ — ข้อมูลในเครื่องยังอยู่ครบ เดี๋ยวจะส่งขึ้นให้เองเมื่อเน็ตกลับมา');
+  }
+
+  checkClockServer(res.headers.get('Date'));
+
+  if (res.status === 401 && !retried && auth && auth.refresh_token){
+    const okRefresh = await sbRefresh();
+    if (okRefresh) return sbCall(pathname, opts, true);
+  }
+  if (!res.ok){
+    let msg = '';
+    try { const j = await res.json(); msg = j.message || j.error_description || j.error || ''; } catch(e){}
+    if (res.status === 401) throw new Error('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่ในแท็บตั้งค่า');
+    throw new Error('เซิร์ฟเวอร์ตอบกลับผิดพลาด (' + res.status + ')' + (msg ? ' — ' + msg : ''));
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+async function sbLogin(email, password){
+  const res = await fetch(SB_URL + '/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, password: password })
+  });
+  const j = await res.json().catch(function(){ return {}; });
+  if (!res.ok) throw new Error(j.error_description || j.msg || j.message || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+  saveAuth({ access_token: j.access_token, refresh_token: j.refresh_token,
+             email: (j.user && j.user.email) || email });
+  return auth;
+}
+async function sbRefresh(){
+  if (!auth || !auth.refresh_token) return false;
+  try {
+    const res = await fetch(SB_URL + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: auth.refresh_token })
+    });
+    if (!res.ok){ saveAuth(null); return false; }
+    const j = await res.json();
+    saveAuth({ access_token: j.access_token, refresh_token: j.refresh_token,
+               email: (j.user && j.user.email) || (auth && auth.email) || '' });
+    return true;
+  } catch(e){ return false; }   /* เน็ตล่ม ไม่ถือว่าโทเคนเสีย เก็บไว้ลองใหม่ทีหลัง */
+}
+
+/* ---- นาฬิกาเครื่องเพี้ยน ----
+   คราวนี้มีเวลาจริงจากเซิร์ฟเวอร์ให้เทียบแล้ว แม่นกว่าการเดาจากข้อมูลของเครื่องอื่น */
 const CLOCK_TOLERANCE_MIN = 10;
 let clockDismissed = false;
-function checkClockFrom(list){
+function showClockBar(offMin){
   const bar = document.getElementById('clock-bar');
-  if (!bar || clockDismissed || !Array.isArray(list)) return;
+  if (!bar || clockDismissed) return;
+  if (offMin < CLOCK_TOLERANCE_MIN){ bar.hidden = true; return; }
+  const amount = offMin >= 120 ? Math.round(offMin / 60) + ' ชั่วโมง' : Math.round(offMin) + ' นาที';
+  document.getElementById('clock-msg').textContent =
+    'นาฬิกาของเครื่องนี้คลาดจากเวลาจริงประมาณ ' + amount + ' — ' +
+    'ระบบใช้เวลาบันทึกตัดสินว่าข้อมูลฉบับไหนใหม่กว่า ถ้าเวลาผิดข้อมูลจะถูกทับผิดตัว ' +
+    'กรุณาตรวจวันและเวลาของ Windows (ตั้งค่าวันที่และเวลา → ตั้งเวลาอัตโนมัติ)';
+  bar.hidden = false;
+}
+function checkClockServer(dateHeader){
+  if (!dateHeader) return;
+  const t = Date.parse(dateHeader);
+  if (isNaN(t)) return;
+  showClockBar(Math.abs(t - Date.now()) / 60000);
+}
+/* ใช้ตอนนำเข้าจากไฟล์ ซึ่งไม่มีเวลาเซิร์ฟเวอร์ให้เทียบ */
+function checkClockFrom(list){
+  if (!Array.isArray(list)) return;
   let ahead = 0;
-  list.forEach(r => {
+  list.forEach(function(r){
     const t = Date.parse(r && r.saved);
     if (!isNaN(t)){ const d = (t - Date.now()) / 60000; if (d > ahead) ahead = d; }
   });
-  if (ahead < CLOCK_TOLERANCE_MIN){ bar.hidden = true; return; }
-  const amount = ahead >= 120 ? Math.round(ahead / 60) + ' ชั่วโมง' : Math.round(ahead) + ' นาที';
-  document.getElementById('clock-msg').textContent =
-    'เจอแผ่นที่บันทึกล้ำเวลาของเครื่องนี้ไป ' + amount + ' — แปลว่ามีเครื่องใดเครื่องหนึ่งตั้งเวลาไม่ตรง ' +
-    'ระบบใช้เวลาบันทึกตัดสินว่าข้อมูลฉบับไหนใหม่กว่า ถ้าเวลาผิดข้อมูลจะถูกทับผิดตัว ' +
-    'กรุณาตรวจวันและเวลาของ Windows ให้ตรงกันทุกเครื่อง (ตั้งค่าวันที่และเวลา → ตั้งเวลาอัตโนมัติ)';
-  bar.hidden = false;
+  showClockBar(ahead);
 }
 
-/* ---- ตัวกันงานโฟลเดอร์แชร์ซ้อนกัน ----
-   ใช้ร่วมกันทั้งปุ่มในแท็บประวัติและในหน้าตั้งค่า ถ้าครอบไม่ครบ การกดซ้ำระหว่างรอเน็ต
-   จะยิงคำสั่งซ้อนกัน เช่น "ใช้โฟลเดอร์ของแอป" กดสองครั้งแล้วได้โฟลเดอร์สองอัน */
+/* ---- ชุดแผ่นที่ยังไม่ได้ส่งขึ้น + ตัวชี้ตำแหน่งตอนดึง ----
+   จงใจใช้ "รายชื่อรหัสแผ่น" ไม่ใช่ "เวลาล่าสุดที่ส่ง" เพราะถ้านาฬิกาเครื่องเพี้ยน
+   แผ่นที่บันทึกด้วยเวลาย้อนหลังจะไม่มีวันถูกส่งขึ้นเลย และไม่มีใครรู้ตัว */
+const DIRTY_KEY  = 'vetrec.dirty';
+const CURSOR_KEY = 'vetrec.cursor';
+const SEED_KEY   = 'vetrec.seeded';
+
+function dirtyGet(){
+  try { const a = JSON.parse(localStorage.getItem(DIRTY_KEY)); return Array.isArray(a) ? a : []; }
+  catch(e){ return []; }
+}
+function dirtySet(ids){
+  try { localStorage.setItem(DIRTY_KEY, JSON.stringify(ids)); } catch(e){}
+}
+function dirtyAdd(ids){
+  if (!ids || !ids.length) return;
+  const seen = {}, out = [];
+  dirtyGet().concat(ids).forEach(function(id){
+    if (id && !seen[id]){ seen[id] = 1; out.push(id); }
+  });
+  dirtySet(out);
+}
+function dirtyClear(ids){
+  if (!ids || !ids.length) return;
+  const drop = {};
+  ids.forEach(function(id){ drop[id] = 1; });
+  dirtySet(dirtyGet().filter(function(id){ return !drop[id]; }));
+}
+/* ส่งข้อมูลทั้งเครื่องขึ้นใหม่ — ใช้ตอนอัปเกรดครั้งแรก และเป็นทางออกถ้าชุดที่ค้างหาย */
+function markAllDirty(){
+  dirtyAdd(loadAll().map(function(r){ return r.id; }).filter(Boolean));
+}
+/* อัปเกรดจากรุ่นโฟลเดอร์แชร์: ข้อมูลที่ค้างอยู่ในเครื่องต้องไหลขึ้นให้หมด ไม่ใช่เฉพาะที่แก้หลังอัปเกรด
+   ทำครั้งเดียวตลอดอายุเครื่อง */
+function seedDirtyOnce(){
+  try {
+    if (localStorage.getItem(SEED_KEY)) return 0;
+    const n = loadAll().length;
+    markAllDirty();
+    localStorage.setItem(SEED_KEY, new Date().toISOString());
+    return n;
+  } catch(e){ return 0; }
+}
+
+/* ---- แปลงรูปแถวไปกลับ ---- */
+const toRow = function(r){
+  return { id: r.id, form: r.form, meta: r.meta || {}, data: r.data || {},
+           saved: r.saved, deleted: !!r.deleted, device: deviceId() };
+};
+/* Postgres คืนเวลามาเป็น "2026-09-01T10:00:00+00:00" แต่ในเครื่องเก็บเป็น "...Z"
+   กติกา "ใครใหม่กว่า" เทียบสตริงตรง ๆ ถ้าไม่แปลงให้เป็นรูปเดียวกัน
+   ของจากคลาวด์จะดู "เก่ากว่า" เสมอ แล้วจะไม่มีอะไรถูกอัปเดตเลยสักแผ่น */
+const fromRow = function(x){
+  let saved = x.saved;
+  const t = Date.parse(saved);
+  if (!isNaN(t)) saved = new Date(t).toISOString();
+  return { id: x.id, form: x.form, meta: x.meta || {}, data: x.data || {},
+           saved: saved, deleted: !!x.deleted };
+};
+
+/* ---- ส่งขึ้น ---- */
+const PUSH_CHUNK = 200;
+async function pushDirty(){
+  const ids = dirtyGet();
+  if (!ids.length) return { sent: 0, applied: 0 };
+  const byId = {};
+  loadAll().forEach(function(r){ byId[r.id] = r; });
+
+  /* รหัสที่ไม่มีในเครื่องแล้ว (เช่นล้างข้อมูลไป) ไม่ต้องค้างในคิว */
+  const gone = ids.filter(function(id){ return !byId[id]; });
+  if (gone.length) dirtyClear(gone);
+
+  const rows = ids.filter(function(id){ return byId[id]; }).map(function(id){ return toRow(byId[id]); });
+  let applied = 0;
+  for (let i = 0; i < rows.length; i += PUSH_CHUNK){
+    const chunk = rows.slice(i, i + PUSH_CHUNK);
+    const res = await sbCall('/rest/v1/rpc/push_sheets', {
+      method: 'POST', body: JSON.stringify({ rows: chunk })
+    });
+    const first = Array.isArray(res) ? res[0] : res;
+    applied += (first && first.applied) || 0;
+    /* ล้างทีละก้อนหลังสำเร็จ ถ้าก้อนถัดไปล้ม ก้อนที่เหลือยังค้างไว้ให้ลองใหม่ */
+    dirtyClear(chunk.map(function(r){ return r.id; }));
+  }
+  return { sent: rows.length, applied: applied };
+}
+
+/* ---- ดึงลง ----
+   ใช้ seq (เลขลำดับของเซิร์ฟเวอร์) เป็นตัวชี้ ไม่ใช้เวลา เพราะการส่งทีเดียวหลายร้อยแผ่น
+   ทุกแถวจะได้เวลาเท่ากันหมด แล้วการแบ่งหน้าด้วยเวลาจะข้ามแถวที่เหลือทิ้ง */
+const PULL_PAGE = 200;
+const PULL_COLS = 'id,form,meta,data,saved,deleted,seq';
+async function pullNew(){
+  let cursor = 0;
+  try { cursor = Number(localStorage.getItem(CURSOR_KEY) || 0) || 0; } catch(e){}
+  const total = { added: 0, updated: 0, skipped: 0, removed: 0 };
+  let rowCount = 0, pages = 0;
+
+  for (;;){
+    const rows = await sbCall('/rest/v1/sheets?select=' + PULL_COLS +
+      '&seq=gt.' + cursor + '&order=seq.asc&limit=' + PULL_PAGE);
+    if (!rows || !rows.length) break;
+
+    const n = mergeIncoming(rows.map(fromRow));
+    total.added += n.added; total.updated += n.updated;
+    total.skipped += n.skipped; total.removed += n.removed;
+    rowCount += rows.length;
+
+    cursor = rows[rows.length - 1].seq;
+    try { localStorage.setItem(CURSOR_KEY, String(cursor)); } catch(e){}
+
+    if (rows.length < PULL_PAGE) break;
+    if (++pages > 500) break;            /* กันวนไม่รู้จบถ้าเซิร์ฟเวอร์ตอบผิดรูป */
+  }
+  return { n: total, rows: rowCount };
+}
+
+/* ---- ซิงก์รอบเดียว: ส่งขึ้นก่อนแล้วค่อยดึงลง ----
+   ส่งก่อนเพื่อให้ของในเครื่องปลอดภัยไว้ก่อน แล้วค่อยรับของคนอื่นเข้ามา */
+let syncBusy = false;
+let lastSyncAt = null;
+let lastSyncErr = '';
+async function syncNow(){
+  if (!sbReady() || !signedIn()) return null;
+  if (syncBusy) return null;
+  syncBusy = true;
+  try {
+    const up = await pushDirty();
+    const down = await pullNew();
+    lastSyncAt = new Date().toISOString();
+    lastSyncErr = '';
+    try { localStorage.setItem(BACKUP_AT, lastSyncAt); } catch(e){}
+    hideBackupBar();
+    renderSyncState();
+    return { up: up, down: down };
+  } catch(err){
+    lastSyncErr = err && err.message ? err.message : String(err);
+    renderSyncState();
+    throw err;
+  } finally {
+    syncBusy = false;
+  }
+}
+/* เรียกแบบไม่รบกวนผู้ใช้ — ล้มเหลวก็เงียบ ค่อยลองใหม่รอบหน้า */
+function syncQuiet(){
+  if (!sbReady() || !signedIn() || navigator.onLine === false) return;
+  syncNow().catch(function(){});
+}
+let syncTimer = null;
+function syncSoon(){
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncQuiet, 3000);   /* หลังกดบันทึก รอสักครู่เผื่อกดรัว ๆ */
+}
+
+/* ---- สถานะการซิงก์บนแถบเครื่องมือ ---- */
+function syncBlockedReason(){
+  if (!sbReady())
+    return 'ไฟล์แอปนี้ยังไม่ได้ใส่ที่อยู่และคีย์ของ Supabase — ใช้งานได้แบบเครื่องเดียว ' +
+           'ยังกรอก บันทึก และพิมพ์ได้ตามปกติ และใช้ “สำรองเป็นไฟล์ / นำเข้าจากไฟล์” ย้ายข้อมูลได้';
+  if (!signedIn())
+    return 'ยังไม่ได้เข้าสู่ระบบ — ข้อมูลจะยังไม่ถูกส่งไปให้เครื่องอื่น ' +
+           'ไปที่แท็บ “ตั้งค่า” เพื่อเข้าสู่ระบบด้วยบัญชีกลางของโรงพยาบาล';
+  return '';
+}
+function renderSyncState(){
+  const el = document.getElementById('sync-state');
+  if (!el) return;
+  const waiting = dirtyGet().length;
+  let msg, kind = '';
+  if (!sbReady()){ msg = 'ไม่ได้ตั้งค่าการซิงก์'; kind = 'off'; }
+  else if (!signedIn()){ msg = 'ยังไม่ได้เข้าสู่ระบบ'; kind = 'warn'; }
+  else if (syncBusy){ msg = 'กำลังซิงก์…'; }
+  else if (lastSyncErr){ msg = 'ซิงก์ไม่สำเร็จ'; kind = 'warn'; }
+  else if (waiting){ msg = 'รอส่งขึ้น ' + waiting + ' แผ่น'; kind = 'warn'; }
+  else if (lastSyncAt){ msg = 'ซิงก์แล้ว ' + fmtClock(lastSyncAt); kind = 'good'; }
+  else { msg = 'ยังไม่ได้ซิงก์'; }
+  el.textContent = msg;
+  el.className = 'sync-state' + (kind ? ' ' + kind : '');
+  el.title = lastSyncErr || (waiting ? 'ยังมีข้อมูลรอส่งขึ้นอยู่' : '');
+}
+function fmtClock(iso){
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  const p = function(n){ return String(n).padStart(2, '0'); };
+  return p(d.getHours()) + ':' + p(d.getMinutes()) + ' น.';
+}
+
+/* ---- ตัวกันงานซ้อนกัน (ใช้ร่วมกับปุ่มในแท็บประวัติและหน้าตั้งค่า) ---- */
 let driveBusy = false;
 function driveLock(){
-  if (driveBusy){ toast('กำลังทำงานกับโฟลเดอร์แชร์อยู่ รอให้เสร็จก่อนครับ'); return false; }
+  if (driveBusy){ toast('กำลังทำงานอยู่ รอให้เสร็จก่อนครับ'); return false; }
   driveBusy = true;
   return true;
 }
-const CFG_BTNS = ['cfg-pick','cfg-test','cfg-forget'];
+const CFG_BTNS = ['cfg-login','cfg-test','cfg-resend','cfg-repull','cfg-logout'];
 function cfgBtns(disabled){
-  CFG_BTNS.forEach(id => { const b = document.getElementById(id); if (b) b.disabled = disabled; });
+  CFG_BTNS.forEach(function(id){ const b = document.getElementById(id); if (b) b.disabled = disabled; });
 }
-/* ครอบปุ่มในหน้าตั้งค่า — fn คืน promise ได้ */
 function cfgRun(fn){
   if (!driveLock()) return;
   cfgBtns(true);
   Promise.resolve().then(fn)
-    .catch(err => toast(err && err.message ? err.message : String(err)))
-    .then(() => { driveBusy = false; cfgBtns(false); });
+    .catch(function(err){ toast(err && err.message ? err.message : String(err)); })
+    .then(function(){ driveBusy = false; cfgBtns(false); });
 }
-
-/* ---- ปุ่มในแท็บประวัติ ---- */
 async function withBusy(btnId, label, fn){
   if (!driveLock()) return;
   const b = document.getElementById(btnId);
@@ -2022,64 +2190,23 @@ async function withBusy(btnId, label, fn){
   finally {
     driveBusy = false;
     if (b){ b.disabled = false; b.textContent = old; }
+    renderSyncState();
     const st = document.getElementById('tab-settings');
     if (st && st.classList.contains('active')) renderSettings();
   }
 }
-/* ดึงไฟล์ล่าสุดมารวมกับข้อมูลในเครื่อง — คืน null ถ้าโฟลเดอร์ยังไม่มีไฟล์
-   quiet = ไม่ต้องถามอะไร ใช้ตอนถูกเรียกจากปุ่มสำรอง */
-/* อ่านไฟล์ของ "ทุกเครื่อง" แล้วรวมเข้าด้วยกัน
-   ไม่มีแนวคิด "ไฟล์ล่าสุด" อีกแล้ว ทุกไฟล์มีค่าเท่ากัน ใครใหม่กว่าตัดสินที่เวลาบันทึกของแต่ละแผ่น
-   ผลพลอยได้: ไฟล์เก่าค้างจากเครื่องที่เลิกใช้ไม่เป็นอันตราย เพราะแผ่นในนั้นเก่ากว่าเสมอ */
-async function pullAll(){
-  const files = await driveBackupFiles();
-  if (!files.length) return null;
-  const total = { added:0, updated:0, skipped:0, removed:0 };
-  const bad = [];
-  let readCount = 0, skipCount = 0;
 
-  for (const f of files){
-    if (seenFiles.get(f.name) === f.modified){ skipCount++; continue; }   /* ไม่เปลี่ยนตั้งแต่รอบก่อน */
-    let data;
-    try { data = await driveGet(f); }
-    catch(e){ bad.push(f.name); continue; }        /* ไฟล์เดียวเสียต้องไม่ทำให้ทั้งรอบล้ม */
-    if (!Array.isArray(data)){ bad.push(f.name); continue; }
-    checkClockFrom(data);
-    const n = mergeIncoming(data);
-    total.added += n.added; total.updated += n.updated;
-    total.skipped += n.skipped; total.removed += n.removed;
-    seenFiles.set(f.name, f.modified);
-    readCount++;
-  }
-  return { n: total, files: files.length, read: readCount, skipped: skipCount, bad: bad };
-}
-
-function doDriveUp(){
-  withBusy('btn-drive-up', 'กำลังสำรอง…', async () => {
-    await ensureFolder(true);          /* ต้องเป็นบรรทัดแรก — ขอสิทธิ์ต้องใช้ user activation */
-    /* ---- ดึงของล่าสุดมารวมก่อนเสมอ ----
-       ไฟล์สำรองแต่ละไฟล์คือภาพรวมทั้งหมด ณ เวลานั้น ถ้าเครื่องที่ข้อมูลไม่ครบเขียนทับ
-       ตำแหน่ง "ไฟล์ล่าสุด" เครื่องที่มาดึงทีหลังจะได้ภาพที่ขาดของเครื่องอื่นไป
-       (เช่น ไม่เห็นรอยลบที่เครื่องอื่นเพิ่งทำ) รวมก่อนเขียนจึงเป็นทางเดียวที่ไม่ต้อง
-       พึ่งว่าเจ้าหน้าที่จะจำลำดับกดปุ่มได้ถูกทุกครั้ง */
-    const pre = await pullAll();
-    const f   = await driveUpload();
-    seenFiles.delete(f.name);              /* ไฟล์ของเราเพิ่งเปลี่ยน รอบหน้าต้องอ่านใหม่ */
-    markBackedUp();
-    const changed = pre ? pre.n.added + pre.n.updated + pre.n.removed : 0;
-    toast((changed ? 'รวมของใหม่จากเครื่องอื่น ' + changed + ' แผ่นก่อน แล้ว' : '') +
-          'สำรองข้อมูลแล้ว — ' + f.name +
-          (pre && pre.bad.length ? ' (อ่านไฟล์ ' + pre.bad.join(', ') + ' ไม่ได้)' : ''));
-  });
-}
-function doDriveDown(){
-  withBusy('btn-drive-down', 'กำลังดึงข้อมูล…', async () => {
-    await ensureFolder(true);          /* ต้องเป็นบรรทัดแรก — ขอสิทธิ์ต้องใช้ user activation */
-    const r = await pullAll();
-    if (!r) throw new Error('ยังไม่มีไฟล์สำรองในโฟลเดอร์นี้');
-    const from = r.read ? 'ดึงจาก ' + r.read + ' เครื่อง' : 'ไม่มีเครื่องไหนอัปเดตใหม่';
-    toast(from + ' — ' + mergeMsg(r.n) +
-          (r.bad.length ? ' (อ่านไฟล์ ' + r.bad.join(', ') + ' ไม่ได้)' : ''));
+/* ---- ปุ่มซิงก์เดี๋ยวนี้ ---- */
+function doSyncClick(){
+  const why = syncBlockedReason();
+  if (why){ toast(why); return; }
+  withBusy('btn-sync', 'กำลังซิงก์…', async function(){
+    const r = await syncNow();
+    if (!r) return;
+    const parts = [];
+    if (r.up.sent) parts.push('ส่งขึ้น ' + r.up.applied + '/' + r.up.sent + ' แผ่น');
+    parts.push('รับมา ' + mergeMsg(r.down.n));
+    toast('ซิงก์เรียบร้อย — ' + parts.join(' · '));
   });
 }
 
@@ -2095,33 +2222,41 @@ function setState(id, msg, kind){
 function fmtStamp(iso){
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '—';
-  const p = n => String(n).padStart(2,'0');
-  return p(d.getDate()) + '/' + p(d.getMonth()+1) + '/' + (d.getFullYear()+543) +
+  const p = function(n){ return String(n).padStart(2, '0'); };
+  return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + (d.getFullYear() + 543) +
          ' เวลา ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ' น.';
 }
-/* ข้อความสถานะโฟลเดอร์ เก็บไว้เพื่อให้ renderSettings วาดซ้ำได้โดยไม่ลบข้อความล่าสุดทิ้ง */
-let folderState = { msg:'ยังไม่ได้เลือกโฟลเดอร์แชร์', kind:'' };
+let folderState = { msg: 'ยังไม่ได้เข้าสู่ระบบ', kind: '' };
 function setFolderState(msg, kind){
   folderState = { msg: msg, kind: kind || '' };
   setState('cfg-fstate', folderState.msg, folderState.kind);
 }
 function renderSettings(){
-  document.getElementById('cfg-days').value   = CFG.remindDays;
+  document.getElementById('cfg-days').value = CFG.remindDays;
   document.getElementById('cfg-count').textContent = load().length + ' แผ่น';
-  document.getElementById('cfg-folder').textContent = dirHandle ? dirHandle.name : '— ยังไม่ได้เลือก —';
-  document.getElementById('cfg-device').textContent = myFileName();
-  let at = null; try { at = localStorage.getItem(BACKUP_AT); } catch(e){}
-  document.getElementById('cfg-last').textContent = at ? fmtStamp(at) : 'ยังไม่เคยสำรอง';
+  document.getElementById('cfg-account').textContent =
+    signedIn() ? (auth.email || 'เข้าสู่ระบบแล้ว') : '— ยังไม่ได้เข้าสู่ระบบ —';
+  document.getElementById('cfg-device').textContent = deviceId();
+  document.getElementById('cfg-persist').textContent = persistState;
+  document.getElementById('cfg-waiting').textContent = dirtyGet().length + ' แผ่น';
 
-  const why = driveBlockedReason();
-  const bl  = document.getElementById('cfg-blocked');
+  let at = null; try { at = localStorage.getItem(BACKUP_AT); } catch(e){}
+  document.getElementById('cfg-last').textContent = at ? fmtStamp(at) : 'ยังไม่เคยซิงก์';
+
+  const row = document.getElementById('cfg-login-row');
+  if (row) row.hidden = signedIn();
+  const out = document.getElementById('cfg-logout');
+  if (out) out.hidden = !signedIn();
+
+  const why = syncBlockedReason();
+  const bl = document.getElementById('cfg-blocked');
   bl.hidden = !why; bl.textContent = why;
 
   setState('cfg-fstate', folderState.msg, folderState.kind);
 }
 function bindSettings(){
   const days = document.getElementById('cfg-days');
-  days.addEventListener('change', () => {
+  days.addEventListener('change', function(){
     const raw = String(days.value).trim();
     let v = raw === '' ? 3 : Math.round(Number(raw));
     if (!Number.isFinite(v)) v = 3;
@@ -2129,40 +2264,84 @@ function bindSettings(){
     days.value = CFG.remindDays; saveSettings(); toast('บันทึกค่าแล้ว');
   });
 
-  /* เลือกโฟลเดอร์ — เบราว์เซอร์บังคับว่าต้องมาจากการกดปุ่มเท่านั้น */
-  document.getElementById('cfg-pick').onclick = () => cfgRun(() =>
-    pickFolder().then(h => {
-      renderSettings();
-      if (h.name === EXPECT_FOLDER){
-        setFolderState('เลือกโฟลเดอร์ “' + h.name + '” แล้ว — กด “ทดสอบการเชื่อมต่อ” เพื่อยืนยันว่าอ่านเขียนได้จริง', 'good');
-      } else {
-        /* เตือนอย่างเดียว ไม่บล็อก เผื่อโรงพยาบาลตั้งใจใช้ชื่ออื่น */
-        setFolderState('เลือกโฟลเดอร์ “' + h.name + '” แล้ว — แต่ตัวช่วยติดตั้งสร้างโฟลเดอร์ชื่อ “' +
-          EXPECT_FOLDER + '” ไว้ ถ้าไม่ได้ตั้งใจเลือกอันนี้ ให้กดเลือกใหม่ ' +
-          'เพราะถ้าแต่ละเครื่องชี้คนละโฟลเดอร์ ข้อมูลจะไม่ตรงกัน', 'bad');
-      }
-      toast('เลือกโฟลเดอร์แชร์แล้ว');
-    }).catch(e => setFolderState(e.message, 'bad')));
+  document.getElementById('cfg-login').onclick = function(){
+    const email = String(document.getElementById('cfg-email').value || '').trim();
+    const pass  = String(document.getElementById('cfg-pass').value || '');
+    if (!email || !pass){ setFolderState('กรอกอีเมลและรหัสผ่านให้ครบก่อน', 'bad'); return; }
+    cfgRun(function(){
+      setFolderState('กำลังเข้าสู่ระบบ…', '');
+      return sbLogin(email, pass).then(function(){
+        document.getElementById('cfg-pass').value = '';
+        renderSettings();
+        setFolderState('เข้าสู่ระบบแล้ว กำลังซิงก์ข้อมูลครั้งแรก…', 'good');
+        return syncNow();
+      }).then(function(){
+        renderSettings();
+        setFolderState('เข้าสู่ระบบและซิงก์ข้อมูลเรียบร้อยแล้ว', 'good');
+        toast('เข้าสู่ระบบแล้ว');
+      }).catch(function(e){
+        renderSettings();
+        setFolderState(e.message, 'bad');
+      });
+    });
+  };
 
-  document.getElementById('cfg-test').onclick = () => cfgRun(() => {
-    setFolderState('กำลังทดสอบ…', 'busy');
-    return ensureFolder(true)
-      .then(() => folderInfo())
-      .then(info => setFolderState(
-        'ใช้งานได้ — โฟลเดอร์ “' + info.name + '” มีข้อมูลจาก ' + info.count + ' เครื่อง' +
-        (info.mine ? ' (รวมเครื่องนี้ด้วย)' : ' (เครื่องนี้ยังไม่เคยสำรอง)'), 'good'))
-      .catch(e => setFolderState(e.message, 'bad'));
-  });
+  document.getElementById('cfg-test').onclick = function(){
+    cfgRun(function(){
+      setFolderState('กำลังทดสอบ…', '');
+      if (!sbReady()) { setFolderState('ยังไม่ได้ตั้งค่าที่อยู่และคีย์ของ Supabase ในไฟล์แอป', 'bad'); return; }
+      if (!signedIn()){ setFolderState('ยังไม่ได้เข้าสู่ระบบ', 'bad'); return; }
+      return sbCall('/rest/v1/sheets?select=id&limit=1')
+        .then(function(){
+          return sbCall('/rest/v1/sheets?select=id', { headers: { 'Prefer': 'count=exact', 'Range': '0-0' } });
+        })
+        .then(function(){ setFolderState('เชื่อมต่อได้ตามปกติ อ่านข้อมูลจากส่วนกลางสำเร็จ', 'good'); })
+        .catch(function(e){ setFolderState(e.message, 'bad'); });
+    });
+  };
 
-  document.getElementById('cfg-forget').onclick = () => {
-    if (!confirm('เลิกใช้โฟลเดอร์แชร์นี้?\n\n' +
-                 'ไฟล์ในโฟลเดอร์จะไม่ถูกลบ และข้อมูลในเครื่องนี้ยังอยู่ครบ ' +
-                 'แค่ต้องเลือกโฟลเดอร์ใหม่ก่อนถึงจะสำรอง/ดึงข้อมูลได้อีก')) return;
-    cfgRun(() => forgetFolder().then(() => {
+  document.getElementById('cfg-resend').onclick = function(){
+    if (!confirm('ส่งข้อมูลทั้งหมดในเครื่องนี้ขึ้นใหม่อีกครั้ง?' + String.fromCharCode(10, 10) +
+                 'ใช้เมื่อสงสัยว่ามีบางแผ่นตกหล่น ไม่ทำให้ข้อมูลของใครหาย ' +
+                 'เพราะแผ่นที่บันทึกทีหลังยังชนะเสมอ')) return;
+    cfgRun(function(){
+      markAllDirty();
       renderSettings();
-      setFolderState('ยังไม่ได้เลือกโฟลเดอร์แชร์', '');
-      toast('เลิกใช้โฟลเดอร์นี้แล้ว');
-    }));
+      setFolderState('กำลังส่งข้อมูลทั้งหมดขึ้นใหม่…', '');
+      return syncNow().then(function(r){
+        renderSettings();
+        setFolderState('ส่งขึ้นใหม่แล้ว ' + (r ? r.up.applied + '/' + r.up.sent : '0') + ' แผ่น', 'good');
+      }).catch(function(e){ setFolderState(e.message, 'bad'); });
+    });
+  };
+
+  /* คู่ตรงข้ามของปุ่มด้านบน: ล้างตัวชี้ตำแหน่งแล้วดึงใหม่ตั้งแต่แผ่นแรก
+     ใช้เมื่อเครื่องนี้เห็นข้อมูลไม่ครบทั้งที่เครื่องอื่นมี เช่นตัวชี้ค้างอยู่แต่ข้อมูลในเครื่องหายไป
+     ปลอดภัยเสมอ เพราะการรวมข้อมูลมีแต่เพิ่มกับทับด้วยฉบับที่ใหม่กว่า ไม่เคยลบของเดิม */
+  document.getElementById('cfg-repull').onclick = function(){
+    if (!confirm('ดึงข้อมูลทั้งหมดจากส่วนกลางใหม่ตั้งแต่ต้น?' + String.fromCharCode(10, 10) +
+                 'ใช้เมื่อเครื่องนี้เห็นข้อมูลไม่ครบทั้งที่เครื่องอื่นมี ' +
+                 'ไม่ทำให้ข้อมูลในเครื่องหาย เพราะการรวมข้อมูลไม่เคยลบของเดิม')) return;
+    cfgRun(function(){
+      try { localStorage.setItem(CURSOR_KEY, '0'); } catch(e){}   /* เริ่มนับใหม่ตั้งแต่แผ่นแรก */
+      setFolderState('กำลังดึงข้อมูลทั้งหมดใหม่…', '');
+      return syncNow().then(function(r){
+        renderSettings();
+        setFolderState('ดึงใหม่แล้ว ' + (r ? r.down.rows : '0') + ' แผ่น', 'good');
+      }).catch(function(e){ setFolderState(e.message, 'bad'); });
+    });
+  };
+
+  document.getElementById('cfg-logout').onclick = function(){
+    const waiting = dirtyGet().length;
+    if (!confirm('ออกจากระบบ?' + String.fromCharCode(10, 10) +
+                 (waiting ? 'ยังมีข้อมูลรอส่งขึ้นอีก ' + waiting + ' แผ่น จะยังไม่ถูกส่งจนกว่าจะเข้าสู่ระบบใหม่' + String.fromCharCode(10, 10) : '') +
+                 'ข้อมูลในเครื่องนี้ยังอยู่ครบ ไม่ได้ถูกลบ')) return;
+    saveAuth(null);
+    renderSettings();
+    renderSyncState();
+    setFolderState('ออกจากระบบแล้ว', '');
+    toast('ออกจากระบบแล้ว');
   };
 }
 
@@ -2238,7 +2417,11 @@ document.getElementById('file-import').onchange = ev => {
   const fr = new FileReader();
   fr.onload = () => {
     try {
-      const n = mergeIncoming(JSON.parse(fr.result));
+      const incoming = JSON.parse(fr.result);
+      checkClockFrom(incoming);
+      const n = mergeIncoming(incoming);
+      /* ของที่นำเข้ามาต้องไหลขึ้นส่วนกลางด้วย ไม่งั้นจะค้างอยู่เครื่องเดียว */
+      markAllDirty(); syncSoon(); renderSyncState();
       toast('นำเข้าแล้ว — ' + mergeMsg(n));
     } catch(err){ toast('นำเข้าไม่สำเร็จ: ' + err.message); }
     ev.target.value = '';
@@ -2366,15 +2549,28 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || window.is
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});   /* ล้มเหลวก็แค่ใช้ออฟไลน์ไม่ได้ ไม่กระทบอย่างอื่น */
   });
-document.getElementById('btn-drive-up').onclick   = doDriveUp;
-document.getElementById('btn-drive-down').onclick = doDriveDown;
+document.getElementById('btn-sync').onclick = doSyncClick;
+askPersist();
+loadAuth();
 bindSettings();
+/* อัปเกรดมาจากรุ่นโฟลเดอร์แชร์: ข้อมูลที่ค้างอยู่ในเครื่องต้องไหลขึ้นให้หมด
+   ไม่ใช่เฉพาะแผ่นที่แก้หลังอัปเกรด — เป็นกลไกที่ทำให้ข้อมูลที่กระจายอยู่กลับมารวมกันเอง */
+const seeded = seedDirtyOnce();
+if (signedIn()) setFolderState('เข้าสู่ระบบไว้แล้ว', 'good');
 renderSettings();
-loadFolderHandle().then(h => {
-  if (!h) return;
-  setFolderState('เลือกโฟลเดอร์ “' + h.name + '” ไว้แล้ว — กด “ทดสอบการเชื่อมต่อ” เพื่อยืนยันว่ายังเข้าถึงได้', '');
-  renderSettings();
-}).catch(() => {});
+renderSyncState();
+if (seeded) setTimeout(function(){
+  toast('เตรียมส่งข้อมูลเดิม ' + seeded + ' แผ่นขึ้นส่วนกลาง');
+}, 900);
+
+/* ซิงก์อัตโนมัติ: ตอนเปิดแอป · เน็ตกลับมา · ทุก 5 นาที
+   ตั้งนาฬิกาเฉพาะตอนที่ตั้งค่าการซิงก์ไว้จริง ไม่งั้นจะมีนาฬิกาเดินเปล่า ๆ
+   ในเครื่องที่ใช้งานแบบเครื่องเดียว */
+if (sbReady()){
+  syncQuiet();
+  window.addEventListener('online', syncQuiet);
+  setInterval(syncQuiet, 5 * 60 * 1000);
+}
 if (migrated) setTimeout(() => toast('แปลงข้อมูลเดิม ' + migrated + ' แผ่นมาใช้รูปแบบใหม่แล้ว (ข้อมูลชุดเดิมยังเก็บไว้)'), 400);
 document.querySelectorAll('form').forEach(f => f.addEventListener('submit', e => e.preventDefault()));
 </script>
