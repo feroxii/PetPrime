@@ -580,7 +580,7 @@ table.vals th:first-child,table.vals td:first-child{text-align:left;white-space:
           <td class="k">วันที่รับเข้า</td>
           <td class="admcell"><div data-datefield="f2_adm"></div><div class="daycount" id="dc-form2"></div></td>
           <td class="k">วันที่บันทึก</td><td data-datefield="f2_admit" data-nav="1"></td>
-          <td class="k">สัตวแพทย์<span class="brk">ผู้รับผิดชอบ</span></td>
+          <td class="k">สัตวแพทย์/พยาบาล<span class="brk">ผู้รับผิดชอบ</span></td>
           <td class="care"><div class="cp">
             <label class="srow"><span class="tag">เคส</span><input name="f2_vet_owner" placeholder="สัตวแพทย์เจ้าของเคส" title="สัตวแพทย์เจ้าของเคส"></label>
             <label class="srow"><span class="tag">D</span><input name="f2_vet" placeholder="ผู้ดูแลเวรกลางวัน"></label>
@@ -735,9 +735,40 @@ table.vals th:first-child,table.vals td:first-child{text-align:left;white-space:
 const T8 = ['09:00','12:00','15:00','18:00','21:00','00:00','03:00','06:00'];   // ฟอร์ม 1 : ตาราง A
 const T8F = ['06:00','09:00','12:00','15:00','18:00','21:00','00:00','03:00']; // ฟอร์ม 1 : ตาราง B/C/D
 const T8b = ['9','12','15','18','21','24','3','6'];                              // ฟอร์ม 2 (สัญญาณชีพ)
-const H24 = [];                                                                 // ฟอร์ม 2 (รายชั่วโมง 6→5)
-for (let h = 6; h <= 24; h++) H24.push(String(h));
-for (let h = 1; h <= 5;  h++) H24.push(String(h));
+const H24 = [];                                                                 // ฟอร์ม 2 (รายชั่วโมง 9→8)
+for (let h = 9; h <= 24; h++) H24.push(String(h));
+for (let h = 1; h <= 8;  h++) H24.push(String(h));
+
+/* ---- ตาราง Treatment / Fluid ของฟอร์ม 2 เคยเริ่มที่ 6 โมง เปลี่ยนเป็นเริ่ม 9 โมง ----
+   ช่องติ๊กเก็บตาม "ลำดับคอลัมน์" ไม่ได้เก็บตามชั่วโมง ถ้าเปลี่ยนหัวคอลัมน์เฉย ๆ
+   ติ๊กที่เคยบันทึกไว้ตอน 6:00 ในแผ่นเก่าจะไปโผล่ที่ 9:00 — เวชระเบียนผิดเวลาไม่ได้
+   แผ่นเก่าจึงต้องหมุนช่องให้แต่ละชั่วโมงไปอยู่คอลัมน์ใหม่ของชั่วโมงเดิม (6,7,8 ย้ายไปท้ายตาราง)
+   แผ่นที่บันทึกด้วยรุ่นนี้ประทับ _h24start = '9' ไว้ จึงหมุนครั้งเดียวไม่หมุนซ้ำ
+   ชื่อขึ้นต้นด้วย _ จงใจไม่ใช้ f2_ เพื่อไม่ให้ไปโดนกฎล้างช่องตาม prefix ตอนเริ่มวันใหม่ */
+const H24_MARK = '_h24start';
+const H24_START = H24[0];
+const H24_SHIFT = 3;                        /* เดิมคอลัมน์แรกคือ 6 → ตอนนี้คือ 9 */
+function rotateH24(c){
+  const n = H24.length, out = [];
+  for (let k = 0; k < n; k++){
+    const v = Array.isArray(c) ? c[(k + H24_SHIFT) % n] : '';
+    out.push(v == null ? '' : v);
+  }
+  return out;
+}
+/* แปลงข้อมูลแผ่นให้เป็นรูปของรุ่นปัจจุบัน — ใช้ทั้งตอนเปิดแผ่นและตอนเทียบว่ามีอะไรแก้ไหม */
+function normalizeData(formId, data){
+  if (formId !== 'form2' || !data) return data;
+  const fields = data.fields || {};
+  if (fields[H24_MARK] === H24_START) return data;
+  const src = data.dyn || {}, dyn = {};
+  Object.keys(src).forEach(k => {
+    dyn[k] = (k === 'tx' || k === 'fl') && Array.isArray(src[k])
+      ? src[k].map(r => ({ l: r && r.l, c: rotateH24(r && r.c) }))
+      : src[k];
+  });
+  return { fields: Object.assign({}, fields, { [H24_MARK]: H24_START }), dyn };
+}
 
 const TREND_ICON = '<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true">'
   + '<polyline points="1,12 5.5,7 9,9.5 15,3" fill="none" stroke="currentColor" stroke-width="2"'
@@ -1122,10 +1153,12 @@ function collect(formId){
   });
   const dyn = {};
   DYN_OF[formId].forEach(k => dyn[k] = readDyn(k));
+  if (formId === 'form2') fields[H24_MARK] = H24_START;   /* ประทับว่าคอลัมน์เริ่มที่ 9 แล้ว */
   return { fields, dyn };
 }
 
 function apply(formId, data){
+  data = normalizeData(formId, data);     /* แผ่นเก่าที่เริ่ม 6 โมง ย้ายช่องให้ตรงเวลาก่อนแสดง */
   const f = document.getElementById(formId);
   const fields = (data && data.fields) || {};
   f.querySelectorAll('input[name],select[name],textarea[name]').forEach(el => {
@@ -1285,7 +1318,8 @@ function isDirty(formId){
   const meta = metaOf(formId, data.fields);
   if (!meta.name.trim() || !meta.date) return false;
   const rec = load().find(r => sameSheet(r, { form:formId, meta }));
-  if (rec) return JSON.stringify(rec.data) !== JSON.stringify(data);
+  /* เทียบกับรูปที่แปลงแล้ว ไม่งั้นแค่เปิดแผ่นเก่าดูเฉย ๆ ก็จะถูกนับว่ามีการแก้ */
+  if (rec) return JSON.stringify(normalizeData(formId, rec.data)) !== JSON.stringify(data);
   const hasField = Object.keys(data.fields).some(n =>
     CLEAR_PREFIX[formId].some(p => n.startsWith(p)) && String(data.fields[n]||'').trim() !== '');
   const hasDyn = Object.keys(data.dyn).some(k =>
